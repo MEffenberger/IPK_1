@@ -6,42 +6,31 @@
 #define IPK_1_TCPPROTOCOLHANDLER_H
 
 #include "ProtocolHandler.h"
+#include "TCPMessageValidator.h"
+#include <iostream>
+#include <ostream>
+#include "FSMValidate.h"
 
 
 class TCPProtocolHandler : public ProtocolHandler {
 private:
-    // ProtocolStateMachine protocol_fsm; // The protocol state machine
-    enum class State {
-        START,
-        AUTH,
-        OPEN,
-        ERROR,
-        END
-    };
 
+    // constructor
 
-    State currentState;
-    std::string displayName;
+    TCPMessageValidator messageValidator;
+    int sockfd; // Socket file descriptor
+    FSMValidate fsm;
+
 
     void write_error_message(const std::string& message);
 
-    std::string authorize_validate_send(const std::string& message);
-    std::string join_validate_send(const std::string& message);
-    std::string message_validate_send(const std::string& message);
-    std::string bye_validate_send(const std::string& message);
-    std::string error_validate_send(const std::string& message);
-
-    std::vector<std::string> split_message(const std::string& message);
-    void validate_id(const std::string& id);
-    void validate_secret(const std::string& secret);
-    void validate_content(const std::string& content);
-    void validate_dname(const std::string& dname);
-
     void print_help();
-    void rename(const std::string& dname);
+    void send_message(const std::string& message);
+
+
 
 public:
-    TCPProtocolHandler() : currentState(State::START) {}
+    TCPProtocolHandler(int fd) : messageValidator(), sockfd(fd), fsm() {}
 
 
     void process_server_message(const std::string& message) override;
