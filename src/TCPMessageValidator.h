@@ -29,7 +29,7 @@ public:
     std::string form_error_message(const std::string& message);
     std::string form_bye_message();
 
-    std::pair<bool, std::string> validate_reply(const std::string& message);
+    std::pair<std::string, bool> validate_reply(const std::string& message);
     bool validate_message_server(const std::string& message);
     bool validate_error_server(const std::string& message);
     bool validate_bye_server(const std::string& message);

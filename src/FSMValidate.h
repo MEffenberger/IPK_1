@@ -36,12 +36,26 @@ private:
         REPLY_SERVER,
         NREPLY_SERVER,
         ANY_USER,
-        ANY_SERVER
+        ANY_SERVER,
+        ANY,
+        WARN_CLIENT,
+        OVER
+    };
+
+    enum class Source {
+        USER,
+        SERVER
     };
 
     State currentState;
+    State previousState;
 
+    std::vector<Action> expectedAction;
 
+    bool check_expected_action(Action action);
+
+    Source get_source(Action action);
+    Action validate_action();
 
 //    Action pendingUserInputAction;
 //    Action pendingServerMessageAction;

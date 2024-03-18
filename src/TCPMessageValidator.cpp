@@ -154,14 +154,14 @@ bool TCPMessageValidator::rename(const std::string& dname) {
     return true;
 }
 
-std::pair<bool, std::string> TCPMessageValidator::validate_reply(const std::string& message) {
+std::pair<std::string, bool> TCPMessageValidator::validate_reply(const std::string& message) {
     // Validate the message
     std::vector<std::string> parts = split_message(message);
 
     // REPLY OK/NOK IS <content>
     // content can have spaces so cannot validate the size
     if (parts[0] != "REPLY" || (parts[1] != "OK" && parts[1] != "NOK") || parts[2] != "IS") {
-        return false;
+        return std::make_pair("Invalid Reply Message Format", false);
     }
     // now glue the content back together and validate it, add whitespace
     std::string content;
@@ -169,7 +169,7 @@ std::pair<bool, std::string> TCPMessageValidator::validate_reply(const std::stri
         content += parts[i] + " ";
     }
     content.pop_back();
-    return std::make_pair(validate_content(content), parts[1]);
+    return std::make_pair(parts[1], validate_content(content));
 }
 
 bool TCPMessageValidator::validate_message_server(const std::string& message) {

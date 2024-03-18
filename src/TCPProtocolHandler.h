@@ -9,6 +9,7 @@
 #include "TCPMessageValidator.h"
 #include <iostream>
 #include <ostream>
+#include <sys/socket.h>
 #include "FSMValidate.h"
 
 
