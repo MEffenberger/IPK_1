@@ -13,6 +13,8 @@
 #include <sys/socket.h>
 #include <string>
 #include <cstring>
+#include <fcntl.h>
+#include <queue>
 
 #include "ProtocolHandler.h"
 #include "TCPProtocolHandler.h"

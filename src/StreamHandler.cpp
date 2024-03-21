@@ -1,6 +1,3 @@
-//
-// Created by marek on 14.03.2024.
-//
 
 #include "StreamHandler.h"
 
@@ -17,81 +14,60 @@ void StreamHandler::add_to_epoll(int fd, uint32_t events) {
 }
 
 void StreamHandler::run_event_loop() {
-    {
-        // Create an epoll instance
-        epoll_fd = epoll_create1(0);
-        if (epoll_fd == -1) {
-            perror("epoll_create1");
+
+    // Set stdin in non-blocking mode if not a terminal
+    if (!isatty(STDIN_FILENO)) {
+        int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+        if (flags == -1) {
+            perror("fcntl");
+            exit(EXIT_FAILURE);
+        }
+        if (fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK) == -1) {
+            perror("fcntl");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // Create epoll file descriptor
+    epoll_fd = epoll_create1(0);
+    if (epoll_fd == -1) {
+        perror("epoll_create1");
+        exit(EXIT_FAILURE);
+    }
+
+    // Add the socket and stdin to epoll
+    add_to_epoll(sockfd, EPOLLIN); // EPOLLIN for readiness to read
+    add_to_epoll(STDIN_FILENO, EPOLLIN);
+
+    std::vector<struct epoll_event> events(2);
+    std::queue<std::string> userCommands; // Queue for user commands
+
+    while (true) {
+        int n_events = epoll_wait(epoll_fd, events.data(), events.size(), -1);
+        if (n_events == -1) {
+            perror("epoll_wait");
             exit(EXIT_FAILURE);
         }
 
-        // Add the socket and STDIN_FILENO to the epoll instance
-        add_to_epoll(sockfd, EPOLLIN); // EPOLLIN for readiness to read
-        add_to_epoll(STDIN_FILENO, EPOLLIN);
+        for (int i = 0; i < n_events; ++i) {
+            if (events[i].data.fd == sockfd) {
+                // Handle server input
+                protocolHandler->process_server_message();
 
-        // Event loop
-        std::vector<struct epoll_event> events(2); // 2 events for STDIN and socket
-
-        while (true) {
-            int n_events = epoll_wait(epoll_fd, events.data(), events.size(), -1);
-            if (n_events == -1) {
-                perror("epoll_wait");
-                exit(EXIT_FAILURE);
-            }
-
-            for (int i = 0; i < n_events; ++i) {
-                if (events[i].data.fd == sockfd) {
-                    // Ready to read from the socket
-                    // Read data, process it with protocol_fsm
-                    // and call protocolHandler->process_server_message()
-                    // to handle the message
-                    // Ready to read from the socket
-                    char buffer[1500];
-                    std::string message;
-                    ssize_t bytes_received;
-                    bool message_complete = false;
-
-                    while (!message_complete) {
-                        memset(buffer, 0, sizeof(buffer));
-                        bytes_received = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
-
-                        if (bytes_received < 0) {
-                            perror("recv");
-                            // Decide how to handle the recv error, maybe continue;
-                        } else if (bytes_received == 0) {
-                            std::cout << "Server closed the connection" << std::endl;
-                            close(sockfd);
-                            return; // Or break if you want to keep the event loop running
-                        } else {
-                            // Successfully received data
-                            message.append(buffer, bytes_received);
-                            // Check if we've received the end-of-message delimiter
-                            if (message.find("\r\n") != std::string::npos) {
-                                message_complete = true;
-                            }
-                        }
-                    }
-                    // Find the position of "\r\n" in the message
-                    size_t pos = message.find("\r\n");
-                    if (pos != std::string::npos) {
-                        // If found, erase it from the message
-                        message.erase(pos, 2);
-                    }
-
-                    // Pass the complete message to the protocol handler
-                    protocolHandler->process_server_message(message);
-
-                } else if (events[i].data.fd == STDIN_FILENO) {
-                    // Ready to read from stdin
-                    // Read input, send appropriate messages to the server
-                    // and call protocolHandler->process_user_input()
-                    // to handle the message
-                    std::string input;
-                    std::getline(std::cin, input);
-                    protocolHandler->process_user_input(input);
-
+            } else if (events[i].data.fd == STDIN_FILENO) {
+                // Handle user input
+                std::string input;
+                if (std::getline(std::cin, input)) { // Non-blocking read
+                    userCommands.push(input);
                 }
             }
+        }
+
+        // Process any queued user commands
+        while (!userCommands.empty()) {
+            std::string command = userCommands.front();
+            userCommands.pop();
+            protocolHandler->process_user_input(command);
         }
     }
 }

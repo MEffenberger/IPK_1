@@ -11,6 +11,8 @@
 #include <ostream>
 #include <sys/socket.h>
 #include "FSMValidate.h"
+#include "ClientOutput.h"
+#include <algorithm>
 
 
 class TCPProtocolHandler : public ProtocolHandler {
@@ -21,11 +23,10 @@ private:
     TCPMessageValidator messageValidator;
     int sockfd; // Socket file descriptor
     FSMValidate fsm;
+    bool waiting_for_reply = false;
+    ClientOutput clientOutput;
 
 
-    void write_error_message(const std::string& message);
-
-    void print_help();
     void send_message(const std::string& message);
 
 
@@ -34,7 +35,7 @@ public:
     TCPProtocolHandler(int fd) : messageValidator(), sockfd(fd), fsm() {}
 
 
-    void process_server_message(const std::string& message) override;
+    void process_server_message() override;
 
     void process_user_input(const std::string& message) override;
 };

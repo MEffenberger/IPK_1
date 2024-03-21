@@ -223,3 +223,7 @@ bool TCPMessageValidator::validate_bye_server(const std::string& message) {
     }
     return true;
 }
+
+std::string TCPMessageValidator::getDisplayName() const {
+    return displayName;
+}

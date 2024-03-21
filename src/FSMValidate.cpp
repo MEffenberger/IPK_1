@@ -103,14 +103,14 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             } else {
 
                 if (get_source(action) == Source::USER) {
-                    expectedAction = {Action::ANY}
+                    expectedAction = {Action::ANY};
                     currentState = State::AUTH;
                     return Action::WARN_CLIENT;
 
                 } else {
                     expectedAction = {Action::BYE_USER};
                     currentState = State::ERROR;
-                    return Action::ERROR_USER
+                    return Action::ERROR_USER;
                 }
             }
 

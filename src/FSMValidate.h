@@ -6,21 +6,13 @@
 #define IPK_1_FSM_VALIDATE_H
 
 #include <map>
+#include <vector>
 
 class FSMValidate {
 public:
 
     FSMValidate() : currentState(State::START) {} // constructor
 
-private:
-
-    enum class State {
-        START,
-        AUTH,
-        OPEN,
-        ERROR,
-        END
-    };
 
     enum class Action {
         EMPTY_SERVER,
@@ -42,6 +34,20 @@ private:
         OVER
     };
 
+    Action validate_action(Action action);
+
+
+private:
+
+    enum class State {
+        START,
+        AUTH,
+        OPEN,
+        ERROR,
+        END
+    };
+
+
     enum class Source {
         USER,
         SERVER
@@ -55,7 +61,6 @@ private:
     bool check_expected_action(Action action);
 
     Source get_source(Action action);
-    Action validate_action();
 
 //    Action pendingUserInputAction;
 //    Action pendingServerMessageAction;

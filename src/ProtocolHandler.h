@@ -10,7 +10,7 @@
 
 class ProtocolHandler {
 public:
-    virtual void process_server_message(const std::string& message) = 0;
+    virtual void process_server_message() = 0;
     virtual void process_user_input(const std::string& message) = 0;
     virtual ~ProtocolHandler() = default;
 };

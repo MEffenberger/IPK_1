@@ -34,6 +34,8 @@ public:
     bool validate_error_server(const std::string& message);
     bool validate_bye_server(const std::string& message);
 
+    std::string getDisplayName() const;
+
 private:
 
     std::string displayName;
