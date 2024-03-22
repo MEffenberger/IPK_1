@@ -12,6 +12,7 @@ class FSMValidate {
 public:
 
     FSMValidate() : currentState(State::START) {} // constructor
+    ~FSMValidate() = default;
 
 
     enum class Action {

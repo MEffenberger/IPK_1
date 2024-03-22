@@ -12,6 +12,7 @@ class ClientOutput {
 
 public:
 
+
 void message_from_server(const std::string&Username, const std::string& message);
 void internal_error_message(const std::string& message);
 void print_help();

@@ -13,6 +13,6 @@
 #include <iostream>
 
 
-int connect(const Config& config);
+int connectToServer(const Config& config);
 
 #endif //IPK_1_CONNECT_H

@@ -3,6 +3,7 @@
 //
 
 #include "FSMValidate.h"
+#include <cstdio>
 
 bool FSMValidate::check_expected_action(Action action) {
     for (Action a : expectedAction) {
@@ -30,7 +31,9 @@ FSMValidate::Source FSMValidate::get_source(Action action) {
 
 FSMValidate::Action FSMValidate::validate_action(Action action) {
 
-    if (expectedAction[0] != Action::ANY) {
+    printf("AM I EVEN HERE?\n");
+
+    if (!expectedAction.empty() && expectedAction[0] != Action::ANY) {
         if (!check_expected_action(action)) {
 
             if (get_source(action) == Source::USER) {
@@ -49,6 +52,8 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             return Action::ANY;
         }
     }
+    printf("AM I EVEN HERE?\n");
+    printf("CURRENT STATE: %d\n", currentState);
 
     switch (currentState) {
         case State::START:
@@ -127,6 +132,7 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             } else if (action == Action::JOIN_USER || action == Action::MESSAGE_USER){
                 expectedAction = {Action::ANY};
                 currentState = State::OPEN;
+                printf("join or message user\n");
                 return Action::ANY;
             }
 

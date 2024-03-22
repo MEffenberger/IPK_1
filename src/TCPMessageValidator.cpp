@@ -69,13 +69,15 @@ bool TCPMessageValidator::validate_content(const std::string& content) {
     return true;
 }
 
-bool TCPMessageValidator::validate_dname(const std::string& dname) {
+bool TCPMessageValidator::validate_dname(const std::string& daname) {
     // Validate the dname
     // 1*20 (VCHAR)
-    if (dname.size() < 1 || dname.size() > 20) {
+    printf("DNAME: %s\n", daname.c_str());
+
+    if (daname.size() < 1 || daname.size() > 20) {
         return false;
     }
-    for (char c : dname) {
+    for (char c : daname) {
         if (!isprint(c)) {
             return false;
         }
@@ -86,25 +88,29 @@ bool TCPMessageValidator::validate_dname(const std::string& dname) {
 
 std::pair<std::string, bool> TCPMessageValidator::authorize_validate(const std::string& message) {
     // Validate the message
+    printf("message: %s\n", message.c_str());
+
     std::vector<std::string> parts = split_message(message);
     if (parts.size() != 3){
         return std::make_pair("Invalid message format", false);
     }
 
-    if (!validate_id(parts[1])) {
+    if (!validate_id(parts[0])) {
         return std::make_pair("Invalid ID format", false);
     }
 
-    if (!validate_secret(parts[2])) {
+    if (!validate_secret(parts[1])) {
         return std::make_pair("Invalid secret format", false);
     }
 
-    if (!validate_dname(parts[3])) {
+    printf("parts[3]: %s\n", parts[2].c_str());
+
+    if (!validate_dname(parts[2])) {
         return std::make_pair("Invalid display name format", false);
     }
-    displayName = parts[3];
+    displayName = parts[2];
 
-    std::string to_send = "AUTH " + parts[1] + " AS " + parts[3] + " USING " + parts[2] + "\r\n";;
+    std::string to_send = "AUTH " + parts[0] + " AS " + parts[2] + " USING " + parts[1] + "\r\n";;
     return std::make_pair(to_send, true);
 
 }
@@ -117,11 +123,11 @@ std::pair<std::string, bool> TCPMessageValidator::join_validate(const std::strin
         return std::make_pair("Invalid message format", false);
     }
 
-    if (!validate_id(parts[1])) {
+    if (!validate_id(parts[0])) {
         return std::make_pair("Invalid ID format", false);
     }
 
-    std::string to_send = "JOIN " + parts[1] + " AS " + displayName + "\r\n";
+    std::string to_send = "JOIN " + parts[0] + " AS " + displayName + "\r\n";
     return std::make_pair(to_send, true);
 
 }
@@ -145,21 +151,26 @@ std::pair<std::string, bool> TCPMessageValidator::message_validate(const std::st
     return std::make_pair(to_send, true);
 }
 
-bool TCPMessageValidator::rename(const std::string& dname) {
+bool TCPMessageValidator::rename(const std::string& daname) {
     // Change the display name
-    if (!validate_dname(dname)){
+    if (!validate_dname(daname)){
         return false;
     }
-    displayName = dname;
+    displayName = daname;
     return true;
 }
 
 std::pair<std::string, bool> TCPMessageValidator::validate_reply(const std::string& message) {
     // Validate the message
     std::vector<std::string> parts = split_message(message);
-
+    if (parts.size() < 3) {
+        return std::make_pair("Invalid Reply Message Format", false);
+    }
     // REPLY OK/NOK IS <content>
     // content can have spaces so cannot validate the size
+    printf("parts[0]: %s\n", parts[0].c_str());
+    printf("parts[1]: %s\n", parts[1].c_str());
+    printf("parts[2]: %s\n", parts[2].c_str());
     if (parts[0] != "REPLY" || (parts[1] != "OK" && parts[1] != "NOK") || parts[2] != "IS") {
         return std::make_pair("Invalid Reply Message Format", false);
     }
@@ -169,12 +180,16 @@ std::pair<std::string, bool> TCPMessageValidator::validate_reply(const std::stri
         content += parts[i] + " ";
     }
     content.pop_back();
-    return std::make_pair(parts[1], validate_content(content));
+    return std::make_pair(content, validate_content(content));
 }
 
 std::pair<std::string, bool> TCPMessageValidator::validate_message_server(const std::string& message) {
     // Validate the message
     std::vector<std::string> parts = split_message(message);
+
+    if (parts.size() < 5) {
+        return std::make_pair("Invalid MSG Format", false);
+    }
 
     if (parts[0] != "MSG" || parts[1] != "FROM" || parts[3] != "IS") {
         return std::make_pair("Invalid MSG Format", false);
@@ -195,6 +210,10 @@ std::pair<std::string, bool> TCPMessageValidator::validate_message_server(const 
 std::pair<std::string, bool> TCPMessageValidator::validate_error_server(const std::string& message) {
     // Validate the message
     std::vector<std::string> parts = split_message(message);
+
+    if (parts.size() < 5) {
+        return std::make_pair("Invalid ERR Format", false);
+    }
 
     if (parts[0] != "ERR" || parts[1] != "FROM" || parts[3] != "IS") {
         return std::make_pair("Invalid ERR Format", false);

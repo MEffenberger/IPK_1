@@ -13,7 +13,8 @@ class TCPMessageValidator {
 public:
 
     TCPMessageValidator() = default;
-
+    ~TCPMessageValidator() = default;
+    std::string displayName;
 
     std::pair<std::string, bool> authorize_validate(const std::string& message);
     std::pair<std::string, bool> join_validate(const std::string& message);
@@ -22,8 +23,8 @@ public:
     std::pair<std::string, bool> error_validate(const std::string& message);
 
 
-    bool validate_dname(const std::string& dname);
-    bool rename(const std::string& dname);
+    bool validate_dname(const std::string& daname);
+    bool rename(const std::string& daname);
     std::string form_error_message(const std::string& message);
     std::string form_bye_message();
 
@@ -34,11 +35,13 @@ public:
 
     std::string getDisplayName() const;
 
+    std::vector<std::string> split_message(const std::string& message);
+
 private:
 
-    std::string displayName;
 
-    std::vector<std::string> split_message(const std::string& message);
+
+
     bool validate_id(const std::string& id);
     bool validate_secret(const std::string& secret);
     bool validate_content(const std::string& content);

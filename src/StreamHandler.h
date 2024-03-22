@@ -45,7 +45,6 @@ public:
     void run_event_loop();
 
 private:
-    void add_to_epoll(int fd, uint32_t events);
 };
 
 #endif //IPK_1_TCP_LOGIC_H

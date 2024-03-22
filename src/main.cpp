@@ -1,6 +1,6 @@
 #include "Parser.h"
 #include "Config.h"
-#include "connect.h"
+#include "connectToServer.h"
 #include "StreamHandler.h"
 
 
@@ -12,17 +12,18 @@ int main(int argc, char *argv[]) {
 
     Config config;
     Parser::parse(argc, argv, config);
+    printf("Parsed config\n");
     config.Validate();
-    int fdconnect = connect(config);
+    printf("Validated config\n");
+    int fdconnect = connectToServer(config);
+    if (fdconnect == -1) {
+        std::cerr << "Unable to connect to the server" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    printf("Connected to server\n");
 
     StreamHandler streamHandler(fdconnect, config.protocol);
     streamHandler.run_event_loop();
-
-    std::cout << "Protocol: " << config.protocol << std::endl;
-    std::cout << "Server IP: " << config.server_ip << std::endl;
-    std::cout << "Server Port: " << config.server_port << std::endl;
-    std::cout << "UDP Confirmation Timeout: " << config.udp_confirmation_timeout << std::endl;
-    std::cout << "Maximum UDP Retransmissions: " << static_cast<int>(config.max_udp_retransmissions) << std::endl;
 
     return 0;
 }
