@@ -22,16 +22,14 @@ public:
     std::pair<std::string, bool> error_validate(const std::string& message);
 
 
-    std::pair<std::string, bool> reply_validate(const std::string& message);
-    std::pair<std::string, bool> nreply_validate(const std::string& message);
     bool validate_dname(const std::string& dname);
     bool rename(const std::string& dname);
     std::string form_error_message(const std::string& message);
     std::string form_bye_message();
 
     std::pair<std::string, bool> validate_reply(const std::string& message);
-    bool validate_message_server(const std::string& message);
-    bool validate_error_server(const std::string& message);
+    std::pair<std::string, bool> validate_message_server(const std::string& message);
+    std::pair<std::string, bool> validate_error_server(const std::string& message);
     bool validate_bye_server(const std::string& message);
 
     std::string getDisplayName() const;

@@ -172,16 +172,16 @@ std::pair<std::string, bool> TCPMessageValidator::validate_reply(const std::stri
     return std::make_pair(parts[1], validate_content(content));
 }
 
-bool TCPMessageValidator::validate_message_server(const std::string& message) {
+std::pair<std::string, bool> TCPMessageValidator::validate_message_server(const std::string& message) {
     // Validate the message
     std::vector<std::string> parts = split_message(message);
 
     if (parts[0] != "MSG" || parts[1] != "FROM" || parts[3] != "IS") {
-        return false;
+        return std::make_pair("Invalid MSG Format", false);
     }
 
     if (!validate_dname(parts[2])) {
-        return false;
+        return std::make_pair("Invalid Username Format Received", false);
     }
     // now glue the content back together and validate it, add whitespace
     std::string content;
@@ -189,19 +189,19 @@ bool TCPMessageValidator::validate_message_server(const std::string& message) {
         content += parts[i] + " ";
     }
     content.pop_back();
-    return validate_content(content);
+    return std::make_pair(content, validate_content(content));
 }
 
-bool TCPMessageValidator::validate_error_server(const std::string& message) {
+std::pair<std::string, bool> TCPMessageValidator::validate_error_server(const std::string& message) {
     // Validate the message
     std::vector<std::string> parts = split_message(message);
 
     if (parts[0] != "ERR" || parts[1] != "FROM" || parts[3] != "IS") {
-        return false;
+        return std::make_pair("Invalid ERR Format", false);
     }
 
     if (!validate_dname(parts[2])) {
-        return false;
+        return std::make_pair("Invalid Username Format Received", false);
     }
     // now glue the content back together and validate it, add whitespace
     std::string content;
@@ -209,7 +209,7 @@ bool TCPMessageValidator::validate_error_server(const std::string& message) {
         content += parts[i] + " ";
     }
     content.pop_back();
-    return validate_content(content);
+    return std::make_pair(content, validate_content(content));
 }
 
 bool TCPMessageValidator::validate_bye_server(const std::string& message) {

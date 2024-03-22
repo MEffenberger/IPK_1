@@ -13,6 +13,8 @@
 #include "FSMValidate.h"
 #include "ClientOutput.h"
 #include <algorithm>
+#include <unistd.h>
+#include <cstring>
 
 
 class TCPProtocolHandler : public ProtocolHandler {
@@ -28,16 +30,16 @@ private:
 
 
     void send_message(const std::string& message);
-
+    ProtocolHandler::ClientState process_received(const std::string& message);
 
 
 public:
     TCPProtocolHandler(int fd) : messageValidator(), sockfd(fd), fsm() {}
 
 
-    void process_server_message() override;
+    ProtocolHandler::ClientState process_server_message() override;
 
-    void process_user_input(const std::string& message) override;
+    ProtocolHandler::ClientState process_user_input(const std::string& message) override;
 };
 
 

@@ -88,7 +88,7 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             } else if (action == Action::ERROR_SERVER) {
                 currentState = State::END;
                 expectedAction = {Action::BYE_USER};
-                return Action::BYE_USER;
+                return Action::ANY;
 
             } else if (action == Action::REPLY_SERVER) {
                 currentState = State::OPEN;
@@ -133,7 +133,7 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             else if (action == Action::ERROR_SERVER) {
                 currentState = State::END;
                 expectedAction = {Action::BYE_USER};
-                return Action::BYE_USER;
+                return Action::ANY;
             }
 
             else if (action == Action::BYE_SERVER) {
@@ -179,6 +179,5 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             previousState = State::END;
 
             return Action::OVER;
-            break;
     }
 }

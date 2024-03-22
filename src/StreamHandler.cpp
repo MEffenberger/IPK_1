@@ -42,7 +42,14 @@ void StreamHandler::run_event_loop() {
     std::vector<struct epoll_event> events(2);
     std::queue<std::string> userCommands; // Queue for user commands
 
+    ProtocolHandler::ClientState state = ProtocolHandler::ClientState::READY_FOR_INPUT;
+
     while (true) {
+        if (state == ProtocolHandler::ClientState::OVER) {
+            close(sockfd);
+            return;
+        }
+
         int n_events = epoll_wait(epoll_fd, events.data(), events.size(), -1);
         if (n_events == -1) {
             perror("epoll_wait");
@@ -52,7 +59,7 @@ void StreamHandler::run_event_loop() {
         for (int i = 0; i < n_events; ++i) {
             if (events[i].data.fd == sockfd) {
                 // Handle server input
-                protocolHandler->process_server_message();
+                state = protocolHandler->process_server_message();
 
             } else if (events[i].data.fd == STDIN_FILENO) {
                 // Handle user input
@@ -63,11 +70,15 @@ void StreamHandler::run_event_loop() {
             }
         }
 
+        if (state == ProtocolHandler::ClientState::WAITING_FOR_REPLY){
+            continue;
+        }
+
         // Process any queued user commands
-        while (!userCommands.empty()) {
+        if (!userCommands.empty()) {
             std::string command = userCommands.front();
             userCommands.pop();
-            protocolHandler->process_user_input(command);
+            state = protocolHandler->process_user_input(command);
         }
     }
 }

@@ -15,15 +15,15 @@ void TCPProtocolHandler::send_message(const std::string& message) {
 }
 
 
-void TCPProtocolHandler::process_user_input(const std::string& message) {
+ProtocolHandler::ClientState TCPProtocolHandler::process_user_input(const std::string& message) {
     // Send the message to the server
     // based on the protocol and the Mealy machine logic
 
     size_t pos = message.find(' ');
     std::string command = message.substr(0, pos);
     std::transform(command.begin(), command.end(), command.begin(), ::toupper);
-
     std::string argument = message.substr(pos + 1);
+    std::transform(argument.begin(), argument.end(), argument.begin(), ::toupper);
 
     std::string response;
     FSMValidate::Action action;
@@ -41,15 +41,18 @@ void TCPProtocolHandler::process_user_input(const std::string& message) {
             //based on the bool we either send it or print it to the user
             if (messageValidator.authorize_validate(argument).second){
                 send_message(response);
+                waiting_for_reply = true;
+                return ProtocolHandler::ClientState::WAITING_FOR_REPLY;
             }
             else{
                 clientOutput.internal_error_message(response);
+                return ProtocolHandler::ClientState::READY_FOR_INPUT;
             }
         }
         else if (reaction == FSMValidate::Action::WARN_CLIENT){
             clientOutput.internal_error_message("You are not authorized to authorize at this state!");
+            return ProtocolHandler::ClientState::READY_FOR_INPUT;
         }
-        return;
     }
 
     else if (command == "/JOIN"){
@@ -61,28 +64,31 @@ void TCPProtocolHandler::process_user_input(const std::string& message) {
             //based on the bool we either send it or print it to the user
             if (messageValidator.join_validate(argument).second){
                 send_message(response);
+                waiting_for_reply = true;
+                return ProtocolHandler::ClientState::WAITING_FOR_REPLY;
             }
             else{
                 clientOutput.internal_error_message(response);
+                return ProtocolHandler::ClientState::READY_FOR_INPUT;
             }
         }
         else if (reaction == FSMValidate::Action::WARN_CLIENT){
             clientOutput.internal_error_message("You are not authorized to join at this state!");
+            return ProtocolHandler::ClientState::READY_FOR_INPUT;
         }
-        return;
     }
 
     else if (command == "/RENAME"){
 
         if (!(messageValidator.rename(argument))){
             clientOutput.internal_error_message("Invalid display name format");
+            return ProtocolHandler::ClientState::READY_FOR_INPUT;
         }
-        return;
     }
 
     else if (command == "/HELP"){
         clientOutput.print_help();
-        return;
+        return ProtocolHandler::ClientState::READY_FOR_INPUT;
     }
 
     else {
@@ -102,19 +108,182 @@ void TCPProtocolHandler::process_user_input(const std::string& message) {
         else if (reaction == FSMValidate::Action::WARN_CLIENT){
             clientOutput.internal_error_message("You are not authorized to send a message at this state!");
         }
-        return;
+        return ProtocolHandler::ClientState::READY_FOR_INPUT;
     }
 }
 
 
-void TCPProtocolHandler::process_server_message() {
+ProtocolHandler::ClientState TCPProtocolHandler::process_server_message() {
+    // Process the message from the server
+    // based on the protocol and the Mealy machine logic
+    char buffer[1500];
+    std::string message;
+    ssize_t bytes_received;
+    bool message_complete = false;
+
+    while (!message_complete) {
+        memset(buffer, 0, sizeof(buffer));
+        bytes_received = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
+
+        if (bytes_received < 0) {
+            perror("recv");/////////////////////////////////////////////////////////////
+
+        } else if (bytes_received == 0) {
+            std::cout << "Server closed the connection" << std::endl;
+            close(sockfd);
+            return ProtocolHandler::ClientState::OVER;
+        } else {
+            // Successfully received data
+            message.append(buffer, bytes_received);
+            // Check if we've received the end-of-message delimiter
+            if (message.find("\r\n") != std::string::npos) {
+                message_complete = true;
+            }
+        }
+    }
+    // Find the position of "\r\n" in the message
+    size_t pos = message.find("\r\n");
+    if (pos != std::string::npos) {
+        // If found, erase it from the message
+        message.erase(pos, 2);
+    }
+    return process_received(message);
+}
+
+ProtocolHandler::ClientState TCPProtocolHandler::process_received(const std::string& message) {
     // Process the message from the server
     // based on the protocol and the Mealy machine logic
 
+
+    std::string mutableMessage = message;
+    std::transform(mutableMessage.begin(), mutableMessage.end(), mutableMessage.begin(), ::toupper);
+    size_t pos = message.find(' ');
+    std::string command = message.substr(0, pos);
+    //extract second word - OK or NOK
+    std::string ok_nok = message.substr(pos + 1, 2);
+
+    std::string response;
     FSMValidate::Action action;
     FSMValidate::Action reaction;
+    std::string Username = messageValidator.getDisplayName();
 
+    if (command == "MSG"){
+        action = FSMValidate::Action::MESSAGE_SERVER;
+        reaction = fsm.validate_action(action);
 
+        if (reaction == FSMValidate::Action::ANY){
+            response = messageValidator.validate_message_server(message).first;
+            if (messageValidator.validate_message_server(message).second){
+                clientOutput.message_from_server(Username, response);
+                if(waiting_for_reply){
+                    return ProtocolHandler::ClientState::WAITING_FOR_REPLY;
+                }
+                return ProtocolHandler::ClientState::READY_FOR_INPUT;
+            }
+            else{
+                std::string error = "ERR FROM " + Username + " IS Invalid message format\r\n";
+                send_message(error);
+                send_message("BYE\r\n");
+                return ProtocolHandler::ClientState::OVER;
+            }
+        }
+        else if (reaction == FSMValidate::Action::ERROR_SERVER){
+            std::string error = "ERR FROM " + Username + " IS You cannot send messages at this state\r\n";
+            send_message(error);
+            send_message("BYE\r\n");
+            return ProtocolHandler::ClientState::OVER;
+        }
+        return ProtocolHandler::ClientState::READY_FOR_INPUT;
+    }
 
+    else if (command == "REPLY"){
+        if (ok_nok == "OK") {
+            action = FSMValidate::Action::REPLY_SERVER;
+            reaction = fsm.validate_action(action);
+
+            if (reaction == FSMValidate::Action::ANY) {
+                response = messageValidator.validate_reply(message).first;
+                if (messageValidator.validate_reply(message).second) {
+                    if(waiting_for_reply){
+                        clientOutput.reply_success(response);
+                        waiting_for_reply = false;
+                        return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                    }
+                    else{
+                        return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                    }
+                } else {
+                    std::string error = "ERR FROM " + Username + " IS Invalid reply format\r\n";
+                    send_message(error);
+                    send_message("BYE\r\n");
+                    return ProtocolHandler::ClientState::OVER;
+                }
+            } else if (reaction == FSMValidate::Action::ERROR_SERVER) {
+                std::string error = "ERR FROM " + Username + " IS You cannot send replies at this state\r\n";
+                send_message(error);
+                send_message("BYE\r\n");
+                return ProtocolHandler::ClientState::OVER;
+            }
+
+        } else if (ok_nok == "NOK") {
+            action = FSMValidate::Action::NREPLY_SERVER;
+            reaction = fsm.validate_action(action);
+
+            if (reaction == FSMValidate::Action::ANY) {
+                response = messageValidator.validate_reply(message).first;
+                if (messageValidator.validate_reply(message).second) {
+                    if(waiting_for_reply){
+                        clientOutput.reply_error(response);
+                        waiting_for_reply = false;
+                        return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                    }
+                    else{
+                        return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                    }
+                } else {
+                    std::string error = "ERR FROM " + Username + " IS Invalid reply format\r\n";
+                    send_message(error);
+                    send_message("BYE\r\n");
+                    return ProtocolHandler::ClientState::OVER;
+                }
+            } else if (reaction == FSMValidate::Action::ERROR_SERVER) {
+                std::string error = "ERR FROM " + Username + " IS You cannot send replies at this state\r\n";
+                send_message(error);
+                send_message("BYE\r\n");
+                return ProtocolHandler::ClientState::OVER;
+            }
+        }
+    }
+
+    else if (command == "ERR"){
+        action = FSMValidate::Action::ERROR_SERVER;
+        reaction = fsm.validate_action(action);
+
+        if (reaction == FSMValidate::Action::ANY){
+            response = messageValidator.validate_error_server(message).first;
+            if (messageValidator.validate_error_server(message).second){
+                clientOutput.error_from_server(Username, response);
+                send_message("BYE\r\n");
+                return ProtocolHandler::ClientState::OVER;
+            }
+            else{
+                std::string error = "ERR FROM " + Username + " IS Invalid error message\r\n";
+                send_message(error);
+                send_message("BYE\r\n");
+                return ProtocolHandler::ClientState::OVER;
+            }
+        } else if (reaction == FSMValidate::Action::ERROR_SERVER){
+            std::string error = "ERR FROM " + Username + " IS You cannot send errors at this state\r\n";
+            send_message(error);
+            send_message("BYE\r\n");
+            return ProtocolHandler::ClientState::OVER;
+        }
+
+    } else {
+        std::string error = "ERR FROM " + Username + " IS Invalid command\r\n";
+        send_message(error);
+        send_message("BYE\r\n");
+        return ProtocolHandler::ClientState::OVER;
+    }
 
 }
