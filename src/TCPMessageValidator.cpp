@@ -13,6 +13,7 @@ std::string TCPMessageValidator::form_bye_message() {
 }
 
 std::vector<std::string> TCPMessageValidator::split_message(const std::string& message) {
+
     std::vector<std::string> result;
     std::string word;
     for (char c : message) {
@@ -72,7 +73,6 @@ bool TCPMessageValidator::validate_content(const std::string& content) {
 bool TCPMessageValidator::validate_dname(const std::string& daname) {
     // Validate the dname
     // 1*20 (VCHAR)
-    printf("DNAME: %s\n", daname.c_str());
 
     if (daname.size() < 1 || daname.size() > 20) {
         return false;
@@ -88,7 +88,6 @@ bool TCPMessageValidator::validate_dname(const std::string& daname) {
 
 std::pair<std::string, bool> TCPMessageValidator::authorize_validate(const std::string& message) {
     // Validate the message
-    printf("message: %s\n", message.c_str());
 
     std::vector<std::string> parts = split_message(message);
     if (parts.size() != 3){
@@ -103,7 +102,7 @@ std::pair<std::string, bool> TCPMessageValidator::authorize_validate(const std::
         return std::make_pair("Invalid secret format", false);
     }
 
-    printf("parts[3]: %s\n", parts[2].c_str());
+
 
     if (!validate_dname(parts[2])) {
         return std::make_pair("Invalid display name format", false);
@@ -168,9 +167,10 @@ std::pair<std::string, bool> TCPMessageValidator::validate_reply(const std::stri
     }
     // REPLY OK/NOK IS <content>
     // content can have spaces so cannot validate the size
-    printf("parts[0]: %s\n", parts[0].c_str());
-    printf("parts[1]: %s\n", parts[1].c_str());
-    printf("parts[2]: %s\n", parts[2].c_str());
+    for (int i = 0; i < 3; i++) {
+        std::transform(parts[i].begin(), parts[i].end(), parts[i].begin(), ::toupper);
+    }
+
     if (parts[0] != "REPLY" || (parts[1] != "OK" && parts[1] != "NOK") || parts[2] != "IS") {
         return std::make_pair("Invalid Reply Message Format", false);
     }
@@ -183,20 +183,26 @@ std::pair<std::string, bool> TCPMessageValidator::validate_reply(const std::stri
     return std::make_pair(content, validate_content(content));
 }
 
-std::pair<std::string, bool> TCPMessageValidator::validate_message_server(const std::string& message) {
+std::pair<std::pair<std::string, std::string>, bool> TCPMessageValidator::validate_message_server(const std::string& message) {
     // Validate the message
     std::vector<std::string> parts = split_message(message);
+    //all parts to upper except the content
+    std::string Username = parts[2];
+    for (int i = 0; i < 4; i++) {
+        std::transform(parts[i].begin(), parts[i].end(), parts[i].begin(), ::toupper);
+    }
+
 
     if (parts.size() < 5) {
-        return std::make_pair("Invalid MSG Format", false);
+        return std::make_pair(std::make_pair("Invalid MSG Format", " "), false);
     }
 
     if (parts[0] != "MSG" || parts[1] != "FROM" || parts[3] != "IS") {
-        return std::make_pair("Invalid MSG Format", false);
+        return std::make_pair(std::make_pair("Invalid MSG Format", " "), false);
     }
 
     if (!validate_dname(parts[2])) {
-        return std::make_pair("Invalid Username Format Received", false);
+        return std::make_pair(std::make_pair("Invalid Username Format Received", " "), false);
     }
     // now glue the content back together and validate it, add whitespace
     std::string content;
@@ -204,7 +210,7 @@ std::pair<std::string, bool> TCPMessageValidator::validate_message_server(const 
         content += parts[i] + " ";
     }
     content.pop_back();
-    return std::make_pair(content, validate_content(content));
+    return std::make_pair(std::make_pair(content, Username), validate_content(content));
 }
 
 std::pair<std::string, bool> TCPMessageValidator::validate_error_server(const std::string& message) {
@@ -214,6 +220,10 @@ std::pair<std::string, bool> TCPMessageValidator::validate_error_server(const st
     if (parts.size() < 5) {
         return std::make_pair("Invalid ERR Format", false);
     }
+
+    std::transform(parts[0].begin(), parts[0].end(), parts[0].begin(), ::toupper);
+    std::transform(parts[1].begin(), parts[1].end(), parts[1].begin(), ::toupper);
+    std::transform(parts[3].begin(), parts[3].end(), parts[3].begin(), ::toupper);
 
     if (parts[0] != "ERR" || parts[1] != "FROM" || parts[3] != "IS") {
         return std::make_pair("Invalid ERR Format", false);

@@ -18,18 +18,15 @@ void StreamHandler::run_event_loop() {
 
     ProtocolHandler::ClientState state = ProtocolHandler::ClientState::READY_FOR_INPUT;
 
-    printf("Starting event loop\n");
     while (true) {
         if (state == ProtocolHandler::ClientState::OVER) {
             close(sockfd);
             return;
         }
 
-        printf("Waiting for events\n");
 
         int n_events = poll(fds.data(), fds.size(), -1); // -1 means wait indefinitely
 
-        printf("Got %d events\n", n_events);
 
         if (n_events == -1) {
             perror("poll");
@@ -47,9 +44,14 @@ void StreamHandler::run_event_loop() {
                 std::string input;
                 input.erase(std::remove(input.begin(), input.end(), '\n'), input.end());
                 if (std::getline(std::cin, input)) { // Blocking read
+                    // Strip newline character if necessary
+                    input.erase(std::remove(input.begin(), input.end(), '\n'), input.end());
+                    if (input.empty()) {
+                        continue;
+                    }
                     userCommands.push(input);
                 } else {
-                    // EOF
+                    // EOF or other read error
                     state = protocolHandler->process_user_input("/exit");
                 }
             }
