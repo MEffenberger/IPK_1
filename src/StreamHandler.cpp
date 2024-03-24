@@ -38,18 +38,20 @@ void StreamHandler::run_event_loop() {
             if (fds[0].revents & POLLIN) {
                 state = protocolHandler->process_server_message();
             }
-
+            if (state == ProtocolHandler::ClientState::WAITING_FOR_REPLY) {
+                continue;
+            }
             // Check if stdin is ready to read
             if (fds[1].revents & POLLIN) {
                 std::string input;
-                input.erase(std::remove(input.begin(), input.end(), '\n'), input.end());
                 if (std::getline(std::cin, input)) { // Blocking read
                     // Strip newline character if necessary
-                    input.erase(std::remove(input.begin(), input.end(), '\n'), input.end());
                     if (input.empty()) {
                         continue;
                     }
-                    userCommands.push(input);
+                    input.erase(std::remove(input.begin(), input.end(), '\n'), input.end());
+                    state = protocolHandler->process_user_input(input);
+                    //userCommands.push(input);
                 } else {
                     // EOF or other read error
                     state = protocolHandler->process_user_input("/exit");
@@ -57,15 +59,15 @@ void StreamHandler::run_event_loop() {
             }
         }
 
-        if (state == ProtocolHandler::ClientState::WAITING_FOR_REPLY){
-            continue;
-        }
-
-        // Process any queued user commands
-        while (!userCommands.empty() && state != ProtocolHandler::ClientState::WAITING_FOR_REPLY) {
-            std::string command = userCommands.front();
-            userCommands.pop();
-            state = protocolHandler->process_user_input(command);
-        }
+//        if (state == ProtocolHandler::ClientState::WAITING_FOR_REPLY){
+//            continue;
+//        }
+//
+//        // Process any queued user commands
+//        while (!userCommands.empty() && state != ProtocolHandler::ClientState::WAITING_FOR_REPLY) {
+//            std::string command = userCommands.front();
+//            userCommands.pop();
+//            state = protocolHandler->process_user_input(command);
+//        }
     }
 }
