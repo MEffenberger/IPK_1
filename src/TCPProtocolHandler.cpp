@@ -123,44 +123,44 @@ ProtocolHandler::ClientState TCPProtocolHandler::process_user_input(const std::s
 
 
 ProtocolHandler::ClientState TCPProtocolHandler::process_server_message() {
-    // Process the message from the server
-    // based on the protocol and the Mealy machine logic
-    char buffer[1500];
-    std::string message;
+    static std::string buffer; // Static to retain data across calls
+    char recvBuffer[1500];
     ssize_t bytes_received;
-    bool message_complete = false;
 
-    printf("Either here\n");
-
-    while (!message_complete) {
-        memset(buffer, 0, sizeof(buffer));
-        bytes_received = recv(sockfd, buffer, sizeof(buffer) - 1, 0);
+    while (true) {
+        memset(recvBuffer, 0, sizeof(recvBuffer));
+        bytes_received = recv(sockfd, recvBuffer, sizeof(recvBuffer) - 1, 0);
 
         if (bytes_received < 0) {
-            perror("recv");/////////////////////////////////////////////////////////////
-
+            perror("recv");
+            // Handle error, potentially return a specific state or throw
         } else if (bytes_received == 0) {
             std::cout << "Server closed the connection" << std::endl;
             close(sockfd);
             return ProtocolHandler::ClientState::OVER;
         } else {
-            // Successfully received data
-            message.append(buffer, bytes_received);
-            // Check if we've received the end-of-message delimiter
-            if (message.find("\r\n") != std::string::npos) {
-                message_complete = true;
+            // Successfully received data, append to the buffer
+            buffer.append(recvBuffer, bytes_received);
+
+            // Process all complete messages in the buffer
+            size_t pos;
+            while ((pos = buffer.find("\r\n")) != std::string::npos) {
+                std::string message = buffer.substr(0, pos); // Extract the message
+                buffer.erase(0, pos + 2); // Remove the processed message from the buffer
+
+                // Process the extracted message
+                auto state = process_received(message);
+                if (state != ProtocolHandler::ClientState::READY_FOR_INPUT) {
+                    return state;
+                }
             }
+
+            // If we reach here, either no complete message was found or all have been processed
+            return ProtocolHandler::ClientState::READY_FOR_INPUT;
         }
     }
-    printf("Or here\n");
-    // Find the position of "\r\n" in the message
-    size_t pos = message.find("\r\n");
-    if (pos != std::string::npos) {
-        // If found, erase it from the message
-        message.erase(pos, 2);
-    }
-    return process_received(message);
 }
+
 
 ProtocolHandler::ClientState TCPProtocolHandler::process_received(const std::string& message) {
     // Process the message from the server
