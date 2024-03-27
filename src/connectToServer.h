@@ -11,8 +11,11 @@
 #include <unistd.h>
 #include <cstring>
 #include <iostream>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 
 int connectToServer(const Config& config);
+struct sockaddr_in getServerAddress(const Config& config);
 
 #endif //IPK_1_CONNECT_H

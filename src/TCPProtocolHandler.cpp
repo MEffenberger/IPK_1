@@ -146,7 +146,7 @@ ProtocolHandler::ClientState TCPProtocolHandler::process_server_message() {
             size_t pos;
             while ((pos = buffer.find("\r\n")) != std::string::npos) {
                 std::string message = buffer.substr(0, pos); // Extract the message
-                buffer.erase(0, pos + 2); // Remove the processed message from the buffer
+                buffer.erase(0, pos + 2); // Remove the processed message from the buffer \r\nmsg from
 
                 // Process the extracted message
                 auto state = process_received(message);

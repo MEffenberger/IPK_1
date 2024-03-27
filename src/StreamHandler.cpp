@@ -58,16 +58,5 @@ void StreamHandler::run_event_loop() {
                 }
             }
         }
-
-//        if (state == ProtocolHandler::ClientState::WAITING_FOR_REPLY){
-//            continue;
-//        }
-//
-//        // Process any queued user commands
-//        while (!userCommands.empty() && state != ProtocolHandler::ClientState::WAITING_FOR_REPLY) {
-//            std::string command = userCommands.front();
-//            userCommands.pop();
-//            state = protocolHandler->process_user_input(command);
-//        }
     }
 }

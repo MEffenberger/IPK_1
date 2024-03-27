@@ -18,7 +18,7 @@
 
 #include "ProtocolHandler.h"
 #include "TCPProtocolHandler.h"
-//#include "UDPProtocolHandler.h"
+#include "UDPProtocolHandler.h"
 
 
 class StreamHandler {
@@ -26,21 +26,25 @@ private:
     int sockfd; // Socket file descriptor
     int epoll_fd; // Epoll file descriptor
     std::string protocol; // The protocol used for communication
+    uint8_t retry_count;
+    uint16_t confirmation_timeout;
     std::unique_ptr<ProtocolHandler> protocolHandler;
+    struct sockaddr_in server_address;
+
+
+
     // ProtocolStateMachine protocol_fsm; // The protocol state machine
 
 public:
-    StreamHandler(int socket_fd, std::string protocol_type) : sockfd(socket_fd), epoll_fd(-1), protocol(protocol_type) {
+    StreamHandler(int socket_fd, std::string protocol_type, uint8_t retry_count, uint16_t confirmation_timeout, struct sockaddr_in server_address) : sockfd(socket_fd), epoll_fd(-1), protocol(protocol_type), retry_count(retry_count), confirmation_timeout(confirmation_timeout),
+                                                                                                                                                     server_address(server_address) {
         if (protocol == "tcp") {
             protocolHandler = std::make_unique<TCPProtocolHandler>(sockfd);
-//        } else if (protocol == "udp") {
-//            protocolHandler = std::make_unique<UDPProtocolHandler>();
-        } else {
-            // Cannot get here really
-            std::cerr << "Invalid protocol provided " << protocol << std::endl;
-            exit(EXIT_FAILURE);
+        } else if (protocol == "udp") {
+            protocolHandler = std::make_unique<UDPProtocolHandler>(sockfd, retry_count, confirmation_timeout, server_address);
         }
     }
+
 
     void run_event_loop();
 

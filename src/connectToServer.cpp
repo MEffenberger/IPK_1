@@ -19,7 +19,15 @@ int connectToServer(const Config& config) {
         return -1;
     }
     for (p = servinfo; p != NULL; p = p->ai_next) {
+
+
         sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+
+        if (config.protocol == "udp") {
+            freeaddrinfo(servinfo);
+            return sockfd;
+        }
+
         if (sockfd != -1) {
             if (::connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
                 std::cerr << "connect error: " << strerror(errno) << std::endl;
@@ -28,6 +36,7 @@ int connectToServer(const Config& config) {
                 freeaddrinfo(servinfo);
                 return sockfd;
             }
+
         } else {
             std::cerr << "socket error: " << strerror(errno) << std::endl;
         }
@@ -36,4 +45,13 @@ int connectToServer(const Config& config) {
     std::cerr << "Unable to connect to the server" << std::endl;
     freeaddrinfo(servinfo);
     return -1; // Return error status
+}
+
+struct sockaddr_in getServerAddress(const Config& config) {
+    struct sockaddr_in server_address;
+    memset(&server_address, 0, sizeof(server_address));
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(config.server_port);
+    inet_pton(AF_INET, config.server_ip, &server_address.sin_addr);
+    return server_address;
 }
