@@ -11,12 +11,14 @@
 class ProtocolHandler {
 public:
     enum class ClientState {
+        WAITING_FOR_CONFIRMATION,
         WAITING_FOR_REPLY,
         READY_FOR_INPUT,
         OVER
     };
     virtual ClientState process_server_message() = 0;
     virtual ClientState process_user_input(const std::string& message) = 0;
+    virtual void resend_last_message() = 0;
     virtual ~ProtocolHandler() = default;
 };
 

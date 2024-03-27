@@ -317,3 +317,10 @@ ProtocolHandler::ClientState TCPProtocolHandler::process_received(const std::str
     }
 
 }
+
+void TCPProtocolHandler::resend_last_message() {
+    // Resend the last message to the server
+    // based on the protocol and the Mealy machine logic
+    // Not used in the TCP protocol
+    return;
+}

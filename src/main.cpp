@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    StreamHandler streamHandler(fdconnect, config.protocol, config.max_udp_retransmissions, config.udp_confirmation_timeout, getServerAddress(config);
+    StreamHandler streamHandler(fdconnect, config.protocol, config.max_udp_retransmissions, config.udp_confirmation_timeout, getServerAddress(config));
     streamHandler.run_event_loop();
 
     return 0;

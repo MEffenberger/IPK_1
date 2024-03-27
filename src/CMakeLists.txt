@@ -13,4 +13,4 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -Wall -Wextra")
 
 
-add_executable(test main.cpp Config.cpp Config.h ClientOutput.cpp ClientOutput.h connectToServer.cpp connectToServer.h FSMValidate.cpp FSMValidate.h Parser.cpp Parser.h ProtocolHandler.cpp ProtocolHandler.h StreamHandler.cpp StreamHandler.h TCPMessageValidator.cpp TCPMessageValidator.h TCPProtocolHandler.cpp TCPProtocolHandler.h)
+add_executable(test main.cpp Config.cpp Config.h ClientOutput.cpp ClientOutput.h connectToServer.cpp connectToServer.h FSMValidate.cpp FSMValidate.h Parser.cpp Parser.h ProtocolHandler.cpp ProtocolHandler.h StreamHandler.cpp StreamHandler.h TCPMessageValidator.cpp TCPMessageValidator.h TCPProtocolHandler.cpp TCPProtocolHandler.h UDPProtocolHandler.cpp UDPProtocolHandler.h)
