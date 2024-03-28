@@ -34,7 +34,7 @@ private:
 
 
 public:
-    TCPProtocolHandler(int fd) : messageValidator(), sockfd(fd), fsm() {}
+    explicit TCPProtocolHandler(int fd) : messageValidator(), sockfd(fd), fsm() {}
 
     void resend_last_message() override;
     ProtocolHandler::ClientState process_server_message() override;

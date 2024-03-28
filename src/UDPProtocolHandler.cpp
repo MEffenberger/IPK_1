@@ -10,9 +10,18 @@ void UDPProtocolHandler::send_message(const std::vector<uint8_t>& message) {
     }
 }
 
+void UDPProtocolHandler::send_confirmation(uint16_t messageID) {
+    std::vector<uint8_t> response;
+    //first byte shall be 0x00
+    response.push_back(0x00);
+    //second two bytes shall be the messageID
+    response.push_back((messageID >> 8) & 0xFF);
+    send_message(response);
+}
+
 void UDPProtocolHandler::resend_last_message() {
     // Resend the last message
-    return;
+    send_message(last_message);
 }
 
 ProtocolHandler::ClientState UDPProtocolHandler::process_server_message() {
@@ -31,7 +40,95 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_server_message() {
 
     memcpy(&server_address, &fromAddr, sizeof(fromAddr));
 
-    return ProtocolHandler::ClientState::WAITING_FOR_REPLY;
+
+    std::vector<uint8_t> message(buffer, buffer + msgLen);
+
+    return process_received(message);
+
+}
+
+ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vector<uint8_t>& message) {
+    // Process the message
+    // Process the message from the server
+    // based on the protocol and the Mealy machine logic
+    uint8_t first_byte = message[0];
+
+    // CONFIRMATION
+    if (first_byte == 0x00){
+        //confirmation message
+        uint16_t messageID = (message[1] << 8) | message[2];
+
+        if (messageID == awaited_conirm_id){
+
+            printf("Confirmation received\n");
+
+
+        }
+    }
+
+    // REPLY
+    else if (first_byte == 0x01){
+        //reply message
+        if (message.size() < 6){
+            ////////////////////////////////////ERROR SERVER SIDE////////////////////////////////////////
+        }
+
+        uint16_t messageID = (message[1] << 8) | message[2];
+        uint8_t status = message[3];
+        uint16_t refID = (message[4] << 8) | message[5];
+
+        // 0x00 NREPLY
+        if (status == 0x00){
+            if (messageID == awaited_reply_id){
+                std::string str(message.begin() + 4, message.end());
+                clientOutput.print_message(str);
+                return ProtocolHandler::ClientState::READY_FOR_INPUT;
+            }
+        }
+        // REPLY
+        else if (status == 0x01){
+            if (messageID == awaited_reply_id){
+                std::string str(message.begin() + 4, message.end());
+                clientOutput.internal_error_message(str);
+                return ProtocolHandler::ClientState::READY_FOR_INPUT;
+            }
+        } else {
+            // ERROR SERVER SIDE
+        }
+    }
+
+    // MESSAGE
+    else if (first_byte == 0x04){
+        //message message
+        uint16_t messageID = (message[1] << 8) | message[2];
+        if (messageID == awaited_reply_id){
+            std::string str(message.begin() + 3, message.end());
+            clientOutput.print_message(str);
+            return ProtocolHandler::ClientState::READY_FOR_INPUT;
+        }
+    }
+
+    // ERR
+    else if (first_byte == 0xFE) {
+        //err message
+        uint16_t messageID = (message[1] << 8) | message[2];
+        if (messageID == awaited_reply_id) {
+            std::string str(message.begin() + 3, message.end());
+            clientOutput.internal_error_message(str);
+        }
+    }
+
+    // BYE
+    else if (first_byte == 0xFF) {
+        //bye message
+        uint16_t messageID = (message[1] << 8) | message[2];
+        if (messageID == awaited_reply_id) {
+            std::string str(message.begin() + 3, message.end());
+            clientOutput.print_message(str);
+            return ProtocolHandler::ClientState::OVER;
+        }
+    }
+
 }
 
 ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::string& message) {

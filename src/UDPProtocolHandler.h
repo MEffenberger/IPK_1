@@ -30,16 +30,19 @@ private:
     uint16_t renamer3000;
     bool waiting_for_reply = false;
     std::vector<uint8_t> last_message;
+    bool error_sent = false;
     bool awaiting_over = false;
 
     UDPMessageValidator messageValidator;
 
     void send_message(const std::vector<uint8_t>& message);
+    void send_confirmation(uint16_t messageID);
+    ProtocolHandler::ClientState process_received(const std::vector<uint8_t>& message);
 
 public:
     UDPProtocolHandler(int fd, uint8_t retry_count, uint16_t confirmation_timeout, struct sockaddr_in serverAddr) : sockfd(fd), retry_count(retry_count), confirmation_timeout(confirmation_timeout), fsm(),
                                                                                                                     server_address(serverAddr) {}
-    void resend_last_message();
+    void resend_last_message() override;
     ProtocolHandler::ClientState process_server_message() override;
 
     ProtocolHandler::ClientState process_user_input(const std::string& message) override;
