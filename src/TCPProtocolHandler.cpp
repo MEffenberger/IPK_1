@@ -191,7 +191,7 @@ ProtocolHandler::ClientState TCPProtocolHandler::process_received(const std::str
         std::string user;
 
         if (reaction == FSMValidate::Action::ANY){
-            response = messageValidator.validate_message_server(mutableMessage).first.first;
+             response = messageValidator.validate_message_server(mutableMessage).first.first;
              user = messageValidator.validate_message_server(mutableMessage).first.second;
             if (messageValidator.validate_message_server(mutableMessage).second){
                 clientOutput.message_from_server(user, response);

@@ -187,6 +187,10 @@ std::pair<std::pair<std::string, std::string>, bool> TCPMessageValidator::valida
     // Validate the message
     std::vector<std::string> parts = split_message(message);
     //all parts to upper except the content
+    if (parts.size() < 5) {
+        return std::make_pair(std::make_pair("Invalid MSG Format", displayName), false);
+    }
+
     std::string Username = parts[2];
     for (int i = 0; i < 4; i++) {
         std::transform(parts[i].begin(), parts[i].end(), parts[i].begin(), ::toupper);
@@ -194,15 +198,15 @@ std::pair<std::pair<std::string, std::string>, bool> TCPMessageValidator::valida
 
 
     if (parts.size() < 5) {
-        return std::make_pair(std::make_pair("Invalid MSG Format", " "), false);
+        return std::make_pair(std::make_pair("Invalid MSG Format", displayName), false);
     }
 
     if (parts[0] != "MSG" || parts[1] != "FROM" || parts[3] != "IS") {
-        return std::make_pair(std::make_pair("Invalid MSG Format", " "), false);
+        return std::make_pair(std::make_pair("Invalid MSG Format", displayName), false);
     }
 
     if (!validate_dname(parts[2])) {
-        return std::make_pair(std::make_pair("Invalid Username Format Received", " "), false);
+        return std::make_pair(std::make_pair("Invalid Username Format Received", displayName), false);
     }
     // now glue the content back together and validate it, add whitespace
     std::string content;

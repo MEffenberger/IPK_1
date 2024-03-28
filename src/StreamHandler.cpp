@@ -7,6 +7,7 @@ void StreamHandler::run_event_loop() {
     // Array of pollfd structures
     std::vector<struct pollfd> fds(2);
 
+
     // Initialize the array for socket and stdin
     fds[0].fd = sockfd; // First file descriptor for the socket
     fds[0].events = POLLIN; // Check for ready to read
@@ -19,7 +20,15 @@ void StreamHandler::run_event_loop() {
     ProtocolHandler::ClientState state = ProtocolHandler::ClientState::READY_FOR_INPUT;
     int timeout_duration = -1;
 
+
+
+        //int nfds = ((state == ProtocolHandler::ClientState::WAITING_FOR_REPLY) || (state == ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION)) ? 1 : 2;
+    //    int n_events = poll(fds.data(), nfds, timeout_duration);
+
+
+
     while (true) {
+
         if (state == ProtocolHandler::ClientState::OVER) {
             close(sockfd);
             return;
@@ -67,14 +76,13 @@ void StreamHandler::run_event_loop() {
 
 
             // Check if stdin is ready to read
-            if (fds[1].revents & POLLIN) {
+            if (fds[1].revents & (POLLIN | POLLHUP)) {
                 std::string input;
                 if (std::getline(std::cin, input)) { // Blocking read
                     // Strip newline character if necessary
                     if (input.empty()) {
                         continue;
                     }
-                    input.erase(std::remove(input.begin(), input.end(), '\n'), input.end());
                     state = protocolHandler->process_user_input(input);
                 } else {
                     // EOF or other read error
