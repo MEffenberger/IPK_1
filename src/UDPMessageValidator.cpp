@@ -15,6 +15,22 @@ std::vector<uint8_t> UDPMessageValidator::form_bye_message(uint16_t messageID) {
     return response;
 }
 
+std::vector<uint8_t > UDPMessageValidator::form_error_message(uint16_t messageID, const std::string& dname,
+                                                              const std::string& error){
+    std::vector<uint8_t> response;
+    response.push_back(0xFE);
+    response.push_back(static_cast<uint8_t>((messageID >> 8) & 0xFF));
+    response.push_back(static_cast<uint8_t>(messageID & 0xFF));
+
+    response.insert(response.end(), dname.begin(), dname.end());
+    response.push_back('\0');
+
+    response.insert(response.end(), error.begin(), error.end());
+    response.push_back('\0');
+
+    return response;
+}
+
 std::vector<std::string> UDPMessageValidator::split_message(const std::string& message) {
 
     std::vector<std::string> result;
@@ -190,4 +206,63 @@ std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::message_validate(int8
     response.push_back('\0');
 
     return std::make_pair(response, true);
+}
+
+std::pair<std::vector<std::string>, bool> UDPMessageValidator::parse_and_validate(const std::vector<uint8_t>& message, std::string type) {
+
+    std::vector<std::string> result;
+    std::string word;
+
+    for (char c : message) {
+        if (c == '\0') {
+            result.push_back(word);
+            word.clear();
+        } else {
+            word += c;
+        }
+    }
+
+    std::string invalid = "Invalid Arguments Provided";
+
+    if (type == "reply"){
+        if (result.size() != 1){
+            result.clear();
+            result.push_back(invalid);
+            return std::make_pair(result, false);
+        } else if (!validate_content(result[0])){
+            result.clear();
+            result.push_back(invalid);
+            return std::make_pair(result, false);
+        } else {
+            return std::make_pair(result, true);
+        }
+    } else if (type == "msg"){
+        if (result.size() != 2){
+            result.clear();
+            result.push_back(invalid);
+            return std::make_pair(result, false);
+        } else if (!validate_dname(result[0]) || !validate_content(result[1])){
+            result.clear();
+            result.push_back(invalid);
+            return std::make_pair(result, false);
+        } else {
+            return std::make_pair(result, true);
+        }
+    } else if (type == "err"){
+        if (result.size() != 2){
+            result.clear();
+            result.push_back(invalid);
+            return std::make_pair(result, false);
+        } else if (!validate_dname(result[0]) || !validate_content(result[1])){
+            result.clear();
+            result.push_back(invalid);
+            return std::make_pair(result, false);
+        } else {
+            return std::make_pair(result, true);
+        }
+    } else {
+        result.clear();
+        result.push_back(invalid);
+        return std::make_pair(result, false);
+    }
 }

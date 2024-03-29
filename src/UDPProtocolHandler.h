@@ -24,7 +24,7 @@ private:
     ClientOutput clientOutput;
     struct sockaddr_in server_address;
 
-    std::vector<uint16_t> confirmed_messages;
+    std::vector<uint16_t> received_ids;
     uint16_t awaited_conirm_id;
     uint16_t awaited_reply_id;
     uint16_t renamer3000;
@@ -38,6 +38,7 @@ private:
     void send_message(const std::vector<uint8_t>& message);
     void send_confirmation(uint16_t messageID);
     ProtocolHandler::ClientState process_received(const std::vector<uint8_t>& message);
+    bool id_lookup(uint16_t id);
 
 public:
     UDPProtocolHandler(int fd, uint8_t retry_count, uint16_t confirmation_timeout, struct sockaddr_in serverAddr) : sockfd(fd), retry_count(retry_count), confirmation_timeout(confirmation_timeout), fsm(),

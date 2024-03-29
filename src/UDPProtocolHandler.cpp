@@ -24,6 +24,10 @@ void UDPProtocolHandler::resend_last_message() {
     send_message(last_message);
 }
 
+bool UDPProtocolHandler::id_lookup(uint16_t id){
+    return std::any_of(received_ids.begin(), received_ids.end(), [id](uint16_t i) { return i == id; });
+}
+
 ProtocolHandler::ClientState UDPProtocolHandler::process_server_message() {
     // Receive the message
     // Receive the message from the server
@@ -61,72 +65,276 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
         if (messageID == awaited_conirm_id){
 
             printf("Confirmation received\n");
+            awaited_conirm_id = 0;
+            if (awaiting_over){
+                return ProtocolHandler::ClientState::OVER;
+            }
 
+            if (error_sent){
+                error_sent = false;
+                std::vector<uint8_t> response = messageValidator.form_bye_message(++renamer3000);
+                send_message(response);
+                awaited_conirm_id = renamer3000;
+                last_message = response;
+                awaiting_over = true;
+                return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
+            }
 
+            if (waiting_for_reply){
+                return ProtocolHandler::ClientState::WAITING_FOR_REPLY;
+            }
+
+            return ProtocolHandler::ClientState::READY_FOR_INPUT;
         }
+        return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
     }
 
     // REPLY
     else if (first_byte == 0x01){
         //reply message
         if (message.size() < 6){
-            ////////////////////////////////////ERROR SERVER SIDE////////////////////////////////////////
+            std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected reply message format");
+            send_message(response);
+            awaited_conirm_id = renamer3000;
+            last_message = response;
+            error_sent = true;
+            return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
         }
+
+        FSMValidate::Action action;
+        FSMValidate::Action reaction;
 
         uint16_t messageID = (message[1] << 8) | message[2];
         uint8_t status = message[3];
         uint16_t refID = (message[4] << 8) | message[5];
+        // content shall be from 6 to the zero byte
+        std::vector<uint8_t> content(message.begin() + 6, message.end());
+        auto [response, success] = messageValidator.parse_and_validate(content, "reply");
 
-        // 0x00 NREPLY
-        if (status == 0x00){
-            if (messageID == awaited_reply_id){
-                std::string str(message.begin() + 4, message.end());
-                clientOutput.print_message(str);
-                return ProtocolHandler::ClientState::READY_FOR_INPUT;
+            if (success) {
+
+                // 0x00 NREPLY
+                if (status == 0x00) {
+
+                    action = FSMValidate::Action::NREPLY_SERVER;
+                    reaction = fsm.validate_action(action);
+                    if (reaction == FSMValidate::Action::ANY) {
+
+                        if (refID == awaited_reply_id) {
+                            clientOutput.reply_error(response[1]);
+                            send_confirmation(messageID);
+                            received_ids.push_back(messageID);
+                            awaited_reply_id = 0;
+                            return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                        } else {
+                            // IGNORE WE BALLIN but send conf
+                            send_confirmation(messageID);
+                            return ProtocolHandler::ClientState::WAITING_FOR_REPLY;
+                        }
+
+                    } else if (reaction == FSMValidate::Action::ERROR_USER){
+
+                        // ERROR SEND TO SERVER
+                        std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Invalid reply message format");
+                        send_message(response);
+                        awaited_conirm_id = renamer3000;
+                        last_message = response;
+                        error_sent = true;
+                        return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
+                    }
+                }
+                    // REPLY
+                else if (status == 0x01) {
+                    action = FSMValidate::Action::REPLY_SERVER;
+                    reaction = fsm.validate_action(action);
+                    if (reaction == FSMValidate::Action::ANY) {
+
+                        if (refID == awaited_reply_id) {
+                            clientOutput.reply_success(response[1]);
+                            send_confirmation(messageID);
+                            received_ids.push_back(messageID);
+                            awaited_reply_id = 0;
+                            return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                        } else {
+                            // IGNORE WE BALLIN but send conf
+                            send_confirmation(messageID);
+                            return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                        }
+                    } else if (reaction == FSMValidate::Action::ERROR_USER){
+
+                        // ERROR SEND TO SERVER
+                        std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Invalid reply message format");
+                        send_message(response);
+                        awaited_conirm_id = renamer3000;
+                        last_message = response;
+                        error_sent = true;
+                        return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
+                    }
+
+                }
+
+                else {
+                    // ERROR SERVER SIDE, NOK OR OK NOT RECEIVED
+                    std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Invalid reply message format");
+                    send_message(response);
+                    awaited_conirm_id = renamer3000;
+                    last_message = response;
+                    error_sent = true;
+                    return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
+
+                }
+
             }
-        }
-        // REPLY
-        else if (status == 0x01){
-            if (messageID == awaited_reply_id){
-                std::string str(message.begin() + 4, message.end());
-                clientOutput.internal_error_message(str);
-                return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                // Invalid content received
+                else {
+                    // ERROR SERVER SIDE
+                    std::vector<uint8_t> err = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), response[0]);
+                    send_message(err);
+                    awaited_conirm_id = renamer3000;
+                    last_message = err;
+                    error_sent = true;
+                    return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
             }
-        } else {
-            // ERROR SERVER SIDE
-        }
     }
 
     // MESSAGE
     else if (first_byte == 0x04){
         //message message
+
+        if (message.size() < 3){
+            ////////////////////////////////////ERROR SERVER SIDE////////////////////////////////////////
+            std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected message format");
+            send_message(response);
+            awaited_conirm_id = renamer3000;
+            last_message = response;
+            error_sent = true;
+            return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
+        }
+
+        FSMValidate::Action action;
+        FSMValidate::Action reaction;
+
         uint16_t messageID = (message[1] << 8) | message[2];
-        if (messageID == awaited_reply_id){
-            std::string str(message.begin() + 3, message.end());
-            clientOutput.print_message(str);
-            return ProtocolHandler::ClientState::READY_FOR_INPUT;
+        std::vector<uint8_t> content(message.begin() + 3, message.end());
+        auto [response, success] = messageValidator.parse_and_validate(content, "message");
+
+        if (success){
+            action = FSMValidate::Action::MESSAGE_SERVER;
+            reaction = fsm.validate_action(action);
+            if (reaction == FSMValidate::Action::ANY) {
+
+                if (id_lookup(messageID)) {
+                    send_confirmation(messageID);
+                    return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                } else {
+                    send_confirmation(messageID);
+                    received_ids.push_back(messageID);
+                    clientOutput.message_from_server(response[0], response[1]);
+                    return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                }
+
+            } else {
+                // ERROR SERVER SIDE
+                std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected Message");
+                send_message(response);
+                awaited_conirm_id = renamer3000;
+                last_message = response;
+                error_sent = true;
+                return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
+            }
+        } else  {
+            // ERROR SERVER SIDE
+            std::vector<uint8_t> err = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), response[0]);
+            send_message(err);
+            awaited_conirm_id = renamer3000;
+            last_message = err;
+            error_sent = true;
+            return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
         }
     }
 
     // ERR
     else if (first_byte == 0xFE) {
         //err message
-        uint16_t messageID = (message[1] << 8) | message[2];
-        if (messageID == awaited_reply_id) {
-            std::string str(message.begin() + 3, message.end());
-            clientOutput.internal_error_message(str);
+        if (message.size() < 4){
+            std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected error message format");
+            send_message(response);
+            awaited_conirm_id = renamer3000;
+            last_message = response;
+            error_sent = true;
+            return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
         }
+        FSMValidate::Action action;
+        FSMValidate::Action reaction;
+
+        uint16_t messageID = (message[1] << 8) | message[2];
+        auto [response, success] = messageValidator.parse_and_validate(std::vector<uint8_t>(message.begin() + 3, message.end()), "error");
+
+        if (success){
+            action = FSMValidate::Action::ERROR_SERVER;
+            reaction = fsm.validate_action(action);
+            if (reaction == FSMValidate::Action::ANY) {
+                if (id_lookup(messageID)) {
+                    send_confirmation(messageID);
+
+                    // send bye
+                    std::vector<uint8_t> response = messageValidator.form_bye_message(++renamer3000);
+                    send_message(response);
+                    awaited_conirm_id = renamer3000;
+                    last_message = response;
+                    awaiting_over = true;
+                    return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
+                } else {
+                    send_confirmation(messageID);
+                    received_ids.push_back(messageID);
+                    clientOutput.error_from_server(response[0], response[1]);
+
+                    std::vector<uint8_t> response = messageValidator.form_bye_message(++renamer3000);
+                    send_message(response);
+                    awaited_conirm_id = renamer3000;
+                    last_message = response;
+                    awaiting_over = true;
+                    return ProtocolHandler::ClientState::READY_FOR_INPUT;
+                }
+            } else {
+                // ERROR SERVER SIDE
+                std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected Error");
+                send_message(response);
+                awaited_conirm_id = renamer3000;
+                last_message = response;
+                error_sent = true;
+                return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
+            }
+        } else {
+            // ERROR SERVER SIDE
+            std::vector<uint8_t> err = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), response[0]);
+            send_message(err);
+            awaited_conirm_id = renamer3000;
+            last_message = err;
+            error_sent = true;
+            return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
+        }
+
     }
 
     // BYE
     else if (first_byte == 0xFF) {
         //bye message
         uint16_t messageID = (message[1] << 8) | message[2];
-        if (messageID == awaited_reply_id) {
-            std::string str(message.begin() + 3, message.end());
-            clientOutput.print_message(str);
-            return ProtocolHandler::ClientState::OVER;
-        }
+        received_ids.push_back(messageID);
+        send_confirmation(messageID);
+        return ProtocolHandler::ClientState::OVER;
+
+    } else {
+        // ERROR SERVER SIDE
+        std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000,
+                                                                            messageValidator.get_display_name(),
+                                                                            "Unexpected message format");
+        send_message(response);
+        awaited_conirm_id = renamer3000;
+        last_message = response;
+        error_sent = true;
+        return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
     }
 
 }

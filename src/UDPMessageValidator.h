@@ -33,6 +33,11 @@ public:
 
     std::vector<uint8_t> form_bye_message(uint16_t messageID);
 
+    std::pair<std::vector<std::string>, bool> parse_and_validate(const std::vector<uint8_t>& message, std::string type);
+
+    std::vector<uint8_t> form_error_message(uint16_t messageID, const std::string& dname,const std::string& error);
+
+
 
 private:
     bool validate_id(const std::string& id);
