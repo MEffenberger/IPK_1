@@ -30,7 +30,7 @@ public:
 
     std::pair<std::string, bool> validate_reply(const std::string& message);
     std::pair<std::pair<std::string, std::string>, bool> validate_message_server(const std::string& message);
-    std::pair<std::string, bool> validate_error_server(const std::string& message);
+    std::pair<std::pair<std::string, std::string>, bool> validate_error_server(const std::string& message);
     bool validate_bye_server(const std::string& message);
 
     std::string getDisplayName() const;

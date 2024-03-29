@@ -29,6 +29,7 @@ void StreamHandler::run_event_loop() {
 
     while (true) {
 
+
         if (state == ProtocolHandler::ClientState::OVER) {
             close(sockfd);
             return;
@@ -40,9 +41,13 @@ void StreamHandler::run_event_loop() {
             timeout_duration = -1; // Otherwise, wait indefinitely
         }
 
-        int nfds = ((state == ProtocolHandler::ClientState::WAITING_FOR_REPLY) || (state == ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION)) ? 1 : 2;
+        int nfds = (state == ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION) ? 1 : 2;
         int n_events = poll(fds.data(), nfds, timeout_duration);
 
+        if (interrupted) {
+            state = protocolHandler->process_user_input("/exit");
+            continue;
+        }
 
         if (n_events == -1) {
             perror("poll");
@@ -68,9 +73,10 @@ void StreamHandler::run_event_loop() {
             // Check if the socket is ready to read
             if (fds[0].revents & POLLIN) {
                 state = protocolHandler->process_server_message();
-                if (state == ProtocolHandler::ClientState::READY_FOR_INPUT){
-
+                if (state != ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION){
+                    retry_count = retrans;
                 }
+                continue;
             }
 
 

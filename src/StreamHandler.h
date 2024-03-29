@@ -19,6 +19,7 @@
 #include "ProtocolHandler.h"
 #include "TCPProtocolHandler.h"
 #include "UDPProtocolHandler.h"
+#include "interruptSignal.h"
 
 
 class StreamHandler {

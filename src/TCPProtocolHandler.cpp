@@ -28,7 +28,7 @@ ProtocolHandler::ClientState TCPProtocolHandler::process_user_input(const std::s
     std::string command = message.substr(0, pos);
     std::transform(command.begin(), command.end(), command.begin(), ::toupper);
     std::string argument = message.substr(pos + 1);
-    std::transform(argument.begin(), argument.end(), argument.begin(), ::toupper);
+   // std::transform(argument.begin(), argument.end(), argument.begin(), ::toupper);
 
 
     std::string response;
@@ -280,9 +280,9 @@ ProtocolHandler::ClientState TCPProtocolHandler::process_received(const std::str
         reaction = fsm.validate_action(action);
 
         if (reaction == FSMValidate::Action::ANY) {
-            response = messageValidator.validate_error_server(mutableMessage).first;
-            if (messageValidator.validate_error_server(mutableMessage).second) {
-                clientOutput.error_from_server(Username, response);
+            auto [data, success] = messageValidator.validate_error_server(mutableMessage);
+            if (success) {
+                clientOutput.error_from_server(data.second, data.first);
                 send_message("BYE\r\n");
                 return ProtocolHandler::ClientState::OVER;
             } else {
@@ -297,6 +297,7 @@ ProtocolHandler::ClientState TCPProtocolHandler::process_received(const std::str
             send_message("BYE\r\n");
             return ProtocolHandler::ClientState::OVER;
         }
+
     } else if (command == "BYE"){
         action = FSMValidate::Action::BYE_SERVER;
         reaction = fsm.validate_action(action);
@@ -309,8 +310,10 @@ ProtocolHandler::ClientState TCPProtocolHandler::process_received(const std::str
             send_message("BYE\r\n");
             return ProtocolHandler::ClientState::OVER;
         }
+
     } else {
-        std::string error = "ERR FROM " + Username + " IS Invalid command\r\n";
+        clientOutput.internal_error_message("Invalid command");
+        std::string error = messageValidator.form_error_message("Invalid command");
         send_message(error);
         send_message("BYE\r\n");
         return ProtocolHandler::ClientState::OVER;

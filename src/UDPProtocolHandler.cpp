@@ -3,8 +3,11 @@
 //
 
 #include "UDPProtocolHandler.h"
+#include <iomanip> // for std::hex and std::setw
 
 void UDPProtocolHandler::send_message(const std::vector<uint8_t>& message) {
+
+    std::cout << std::endl;
     if(sendto(sockfd, message.data(), message.size(), 0,(struct sockaddr*)&server_address, sizeof(server_address)) < 0){
         clientOutput.internal_error_message("Error while sending the message");
     }
@@ -15,7 +18,8 @@ void UDPProtocolHandler::send_confirmation(uint16_t messageID) {
     //first byte shall be 0x00
     response.push_back(0x00);
     //second two bytes shall be the messageID
-    response.push_back((messageID >> 8) & 0xFF);
+    response.push_back(static_cast<uint8_t>((messageID >> 8)));
+    response.push_back(static_cast<uint8_t>(messageID & 0xFF));
     send_message(response);
 }
 
@@ -64,19 +68,20 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
 
         if (messageID == awaited_conirm_id){
 
-            printf("Confirmation received\n");
             awaited_conirm_id = 0;
+
             if (awaiting_over){
                 return ProtocolHandler::ClientState::OVER;
             }
 
             if (error_sent){
                 error_sent = false;
-                std::vector<uint8_t> response = messageValidator.form_bye_message(++renamer3000);
+                std::vector<uint8_t> response = messageValidator.form_bye_message(renamer3000);
                 send_message(response);
                 awaited_conirm_id = renamer3000;
                 last_message = response;
                 awaiting_over = true;
+                renamer3000++;
                 return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
             }
 
@@ -93,11 +98,12 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
     else if (first_byte == 0x01){
         //reply message
         if (message.size() < 6){
-            std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected reply message format");
+            std::vector<uint8_t> response = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), "Unexpected reply message format");
             send_message(response);
             awaited_conirm_id = renamer3000;
             last_message = response;
             error_sent = true;
+            renamer3000++;
             return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
         }
 
@@ -121,7 +127,7 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
                     if (reaction == FSMValidate::Action::ANY) {
 
                         if (refID == awaited_reply_id) {
-                            clientOutput.reply_error(response[1]);
+                            clientOutput.reply_error(response[0]);
                             send_confirmation(messageID);
                             received_ids.push_back(messageID);
                             awaited_reply_id = 0;
@@ -135,11 +141,12 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
                     } else if (reaction == FSMValidate::Action::ERROR_USER){
 
                         // ERROR SEND TO SERVER
-                        std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Invalid reply message format");
+                        std::vector<uint8_t> response = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), "Invalid reply message format");
                         send_message(response);
                         awaited_conirm_id = renamer3000;
                         last_message = response;
                         error_sent = true;
+                        renamer3000++;
                         return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
                     }
                 }
@@ -150,9 +157,10 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
                     if (reaction == FSMValidate::Action::ANY) {
 
                         if (refID == awaited_reply_id) {
-                            clientOutput.reply_success(response[1]);
+                            clientOutput.reply_success(response[0]);
                             send_confirmation(messageID);
                             received_ids.push_back(messageID);
+                            waiting_for_reply = false;
                             awaited_reply_id = 0;
                             return ProtocolHandler::ClientState::READY_FOR_INPUT;
                         } else {
@@ -163,11 +171,12 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
                     } else if (reaction == FSMValidate::Action::ERROR_USER){
 
                         // ERROR SEND TO SERVER
-                        std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Invalid reply message format");
+                        std::vector<uint8_t> response = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), "Invalid reply message format");
                         send_message(response);
                         awaited_conirm_id = renamer3000;
                         last_message = response;
                         error_sent = true;
+                        renamer3000++;
                         return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
                     }
 
@@ -175,11 +184,12 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
 
                 else {
                     // ERROR SERVER SIDE, NOK OR OK NOT RECEIVED
-                    std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Invalid reply message format");
+                    std::vector<uint8_t> response = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), "Invalid reply message format");
                     send_message(response);
                     awaited_conirm_id = renamer3000;
                     last_message = response;
                     error_sent = true;
+                    renamer3000++;
                     return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
 
                 }
@@ -188,11 +198,12 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
                 // Invalid content received
                 else {
                     // ERROR SERVER SIDE
-                    std::vector<uint8_t> err = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), response[0]);
+                    std::vector<uint8_t> err = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), response[0]);
                     send_message(err);
                     awaited_conirm_id = renamer3000;
                     last_message = err;
                     error_sent = true;
+                    renamer3000++;
                     return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
             }
     }
@@ -203,11 +214,12 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
 
         if (message.size() < 3){
             ////////////////////////////////////ERROR SERVER SIDE////////////////////////////////////////
-            std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected message format");
+            std::vector<uint8_t> response = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), "Unexpected message format");
             send_message(response);
             awaited_conirm_id = renamer3000;
             last_message = response;
             error_sent = true;
+            renamer3000++;
             return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
         }
 
@@ -216,7 +228,7 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
 
         uint16_t messageID = (message[1] << 8) | message[2];
         std::vector<uint8_t> content(message.begin() + 3, message.end());
-        auto [response, success] = messageValidator.parse_and_validate(content, "message");
+        auto [response, success] = messageValidator.parse_and_validate(content, "msg");
 
         if (success){
             action = FSMValidate::Action::MESSAGE_SERVER;
@@ -235,20 +247,22 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
 
             } else {
                 // ERROR SERVER SIDE
-                std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected Message");
+                std::vector<uint8_t> response = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), "Unexpected Message");
                 send_message(response);
                 awaited_conirm_id = renamer3000;
                 last_message = response;
                 error_sent = true;
+                renamer3000++;
                 return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
             }
         } else  {
             // ERROR SERVER SIDE
-            std::vector<uint8_t> err = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), response[0]);
+            std::vector<uint8_t> err = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), response[0]);
             send_message(err);
             awaited_conirm_id = renamer3000;
             last_message = err;
             error_sent = true;
+            renamer3000++;
             return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
         }
     }
@@ -257,11 +271,12 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
     else if (first_byte == 0xFE) {
         //err message
         if (message.size() < 4){
-            std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected error message format");
+            std::vector<uint8_t> response = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), "Unexpected error message format");
             send_message(response);
             awaited_conirm_id = renamer3000;
             last_message = response;
             error_sent = true;
+            renamer3000++;
             return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
         }
         FSMValidate::Action action;
@@ -278,40 +293,44 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
                     send_confirmation(messageID);
 
                     // send bye
-                    std::vector<uint8_t> response = messageValidator.form_bye_message(++renamer3000);
+                    std::vector<uint8_t> response = messageValidator.form_bye_message(renamer3000);
                     send_message(response);
                     awaited_conirm_id = renamer3000;
                     last_message = response;
                     awaiting_over = true;
+                    renamer3000++;
                     return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
                 } else {
                     send_confirmation(messageID);
                     received_ids.push_back(messageID);
                     clientOutput.error_from_server(response[0], response[1]);
 
-                    std::vector<uint8_t> response = messageValidator.form_bye_message(++renamer3000);
+                    std::vector<uint8_t> response = messageValidator.form_bye_message(renamer3000);
                     send_message(response);
                     awaited_conirm_id = renamer3000;
                     last_message = response;
                     awaiting_over = true;
+                    renamer3000++;
                     return ProtocolHandler::ClientState::READY_FOR_INPUT;
                 }
             } else {
                 // ERROR SERVER SIDE
-                std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), "Unexpected Error");
+                std::vector<uint8_t> response = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), "Unexpected Error");
                 send_message(response);
                 awaited_conirm_id = renamer3000;
                 last_message = response;
                 error_sent = true;
+                renamer3000++;
                 return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
             }
         } else {
             // ERROR SERVER SIDE
-            std::vector<uint8_t> err = messageValidator.form_error_message(++renamer3000, messageValidator.get_display_name(), response[0]);
+            std::vector<uint8_t> err = messageValidator.form_error_message(renamer3000, messageValidator.get_display_name(), response[0]);
             send_message(err);
             awaited_conirm_id = renamer3000;
             last_message = err;
             error_sent = true;
+            renamer3000++;
             return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
         }
 
@@ -327,13 +346,15 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_received(const std::vec
 
     } else {
         // ERROR SERVER SIDE
-        std::vector<uint8_t> response = messageValidator.form_error_message(++renamer3000,
+        std::vector<uint8_t> response = messageValidator.form_error_message(renamer3000,
                                                                             messageValidator.get_display_name(),
                                                                             "Unexpected message format");
         send_message(response);
+        clientOutput.internal_error_message("Unexpected message format");
         awaited_conirm_id = renamer3000;
         last_message = response;
         error_sent = true;
+        renamer3000++;
         return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
     }
 
@@ -344,10 +365,12 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::s
     // Send the message to the server
     // based on the protocol and the Mealy machine logic
     if (message == "/exit"){
-        std::vector<uint8_t> response = messageValidator.form_bye_message(++renamer3000);
+        std::vector<uint8_t> response = messageValidator.form_bye_message(renamer3000);
         send_message(response);
         last_message = response;
         awaiting_over = true;
+        awaited_conirm_id = renamer3000;
+        renamer3000++;
         return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
     }
 
@@ -356,7 +379,7 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::s
     std::string command = message.substr(0, pos);
     std::transform(command.begin(), command.end(), command.begin(), ::toupper);
     std::string argument = message.substr(pos + 1);
-    std::transform(argument.begin(), argument.end(), argument.begin(), ::toupper);
+    //std::transform(argument.begin(), argument.end(), argument.begin(), ::toupper);
 
 
 
@@ -381,7 +404,7 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::s
                 return ProtocolHandler::ClientState::READY_FOR_INPUT;
             }
 
-            auto [response, success] = messageValidator.authorize_validate(0x02, ++renamer3000, parts[0], parts[2], parts[1]);
+            auto [response, success] = messageValidator.authorize_validate(0x02, renamer3000, parts[0], parts[2], parts[1]);
             //based on the bool we either send it or print it to the user
 
             if (success){
@@ -392,13 +415,13 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::s
 
                 awaited_reply_id = renamer3000;
                 awaited_conirm_id = renamer3000;
+                renamer3000++;
 
                 ////////////////////////////////////////////////////////////////////////////////////////////////////
-                return ProtocolHandler::ClientState::WAITING_FOR_REPLY;
+                return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
                 ////////////////////////////////////////////////////////////////////////////////////////////////////
             }
             else{
-                renamer3000--;
                 std::string str(response.begin(), response.end());
                 clientOutput.internal_error_message(str);
                 return ProtocolHandler::ClientState::READY_FOR_INPUT;
@@ -421,7 +444,7 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::s
                 clientOutput.internal_error_message("Invalid message format");
                 return ProtocolHandler::ClientState::READY_FOR_INPUT;
             }
-            auto [response, success] = messageValidator.join_validate(0x03, ++renamer3000, parts[0]);
+            auto [response, success] = messageValidator.join_validate(0x03, renamer3000, parts[0]);
 
             //based on the bool we either send it or print it to the user
             if (success){
@@ -432,13 +455,12 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::s
 
                 awaited_reply_id = renamer3000;
                 awaited_conirm_id = renamer3000;
-
+                renamer3000++;
                 ////////////////////////////////////////////////////////////////////////////////////////////////////
-                return ProtocolHandler::ClientState::WAITING_FOR_REPLY;
+                return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
                 ////////////////////////////////////////////////////////////////////////////////////////////////////
             }
             else{
-                renamer3000--;
                 std::string str(response.begin(), response.end());
                 clientOutput.internal_error_message(str);
                 return ProtocolHandler::ClientState::READY_FOR_INPUT;
@@ -469,7 +491,7 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::s
 
         if (reaction == FSMValidate::Action::ANY){
 
-            auto [response, success] = messageValidator.message_validate(0x04, ++renamer3000, message);
+            auto [response, success] = messageValidator.message_validate(0x04, renamer3000, message);
 
             if (success){
                 send_message(response);
@@ -479,10 +501,10 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::s
 
                 awaited_reply_id = 0;
                 awaited_conirm_id = renamer3000;
+                renamer3000++;
                 return ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
             }
             else{
-                renamer3000--;
                 std::string str(response.begin(), response.end());
                 clientOutput.internal_error_message(str);
                 return ProtocolHandler::ClientState::READY_FOR_INPUT;

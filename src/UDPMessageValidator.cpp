@@ -133,7 +133,7 @@ std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::authorize_validate(in
     response.push_back(code);
 
     // Add the messageID (2 bytes, big endian)
-    response.push_back(static_cast<uint8_t>((messageID >> 8) & 0xFF));
+    response.push_back(static_cast<uint8_t>((messageID >> 8)));
     response.push_back(static_cast<uint8_t>(messageID & 0xFF));
 
     // Add the username and null terminator
@@ -166,7 +166,7 @@ std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::join_validate(int8_t 
     response.push_back(code);
 
     // Add the messageID (2 bytes, big endian)
-    response.push_back(static_cast<uint8_t>((messageID >> 8) & 0xFF));
+    response.push_back(static_cast<uint8_t>((messageID >> 8)));
     response.push_back(static_cast<uint8_t>(messageID & 0xFF));
 
     // Add the channel and null terminator
@@ -194,7 +194,7 @@ std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::message_validate(int8
     response.push_back(code);
 
     // Add the messageID (2 bytes, big endian)
-    response.push_back(static_cast<uint8_t>((messageID >> 8) & 0xFF));
+    response.push_back(static_cast<uint8_t>((messageID >> 8)));
     response.push_back(static_cast<uint8_t>(messageID & 0xFF));
 
     // Add the displayName and null terminator
