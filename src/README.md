@@ -93,7 +93,7 @@ validating the state of the client and server. The 'FSMValidate' class is used t
 
 The general overview of the system architecture is shown in the following diagram:
 
-![System Architecture](diagram.png)
+![System Architecture](images/diagram.png)
 
 I have deliberately chosen a simple approach which combines procedural and object-oriented programming using only single instances of classes. 
 Although the system is not overly complex, the classes are mainly used to encapsulate the basic logic of the system and to separate the concerns of the system.
@@ -174,7 +174,7 @@ The communication could be observed straightforwardly using the Ncat server.
 The UDP part was harder to test due to the nature of the protocol. 
 Using the PacketSender and the student environment I was able to validate that the dynamic protocol assignment works correctly and that the client can handle the retransmissions of the messages.
 This was achieved by confirming the message and switching port on the testing server by simply observing that the address structure changed and the data are sent accordingly.
-![Wireshark](wireshark_udp.png)
+![Wireshark](images/wireshark_udp.png)
 
 The packet loss was observed using Wireshark on bigger testcases to ensure that the incrementation of the ID is done correctly.
 
