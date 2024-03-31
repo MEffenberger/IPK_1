@@ -10,6 +10,9 @@ all: $(PROGRAM)
 $(PROGRAM): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
+doxygen:
+    $(DOXYGEN) $(DOXYFILE)
+
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

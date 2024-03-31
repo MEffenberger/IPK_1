@@ -55,7 +55,7 @@ void StreamHandler::run_event_loop() {
         }
 
         // Poll the file descriptors if the state is waiting for confirmation block the stdin
-        int nfds = (state == ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION) ? 1 : 2;
+        int nfds = ((state == ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION) || (state == ProtocolHandler::ClientState::WAITING_FOR_REPLY)) ? 1 : 2;
         int n_events = poll(fds.data(), nfds, timeout_duration);
 
         // Check if the signal was interrupted, if so, send bye

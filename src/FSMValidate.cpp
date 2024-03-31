@@ -160,7 +160,7 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             else if (action == Action::BYE_SERVER) {
                 currentState = State::END;
                 expectedAction = {Action::ANY};
-                return Action::OVER;
+                return Action::ANY;
             }
 
             else if (action == Action::BYE_USER) {
@@ -172,7 +172,7 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             else if (action == Action::ERROR_USER) {
                 currentState = State::END;
                 expectedAction = {Action::BYE_SERVER};
-                return Action::BYE_SERVER;
+                return Action::ANY;
             }
 
             else {
