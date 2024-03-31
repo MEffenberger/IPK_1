@@ -1,16 +1,24 @@
-//
-// Created by marek on 17.03.2024.
-//
+/**
+ * @file FSMValidate.cpp
+ *
+ * Implementation of the FSMValidate class
+ * By a set of enums validating the actions of the client
+ *
+ * @Author Marek Effenberger
+ */
 
 #include "FSMValidate.h"
-#include <cstdio>
+#define printf(...) ((void)0)
+
 
 bool FSMValidate::check_expected_action(Action action) {
+    // Searching for the action in the expected actions
     for (Action a : expectedAction) {
         if (a == action) {
             return true;
         }
     }
+    // Shouldn't be needed
     if (expectedAction[0] == Action::ANY) {
         return true;
     }
@@ -18,11 +26,11 @@ bool FSMValidate::check_expected_action(Action action) {
 }
 
 FSMValidate::Source FSMValidate::get_source(Action action) {
-    //enums with server written in them return server
+    // Enums concerning server
     if (action == Action::EMPTY_SERVER || action == Action::MESSAGE_SERVER || action == Action::BYE_SERVER || action == Action::ERROR_SERVER || action == Action::REPLY_SERVER || action == Action::NREPLY_SERVER) {
         return Source::SERVER;
     }
-    //enums with user written in them return user
+    // Enums concerning user
     if (action == Action::EMPTY_USER || action == Action::AUTHORIZE_USER || action == Action::JOIN_USER || action == Action::MESSAGE_USER || action == Action::BYE_USER || action == Action::ERROR_USER) {
         return Source::USER;
     }
@@ -31,10 +39,18 @@ FSMValidate::Source FSMValidate::get_source(Action action) {
 
 FSMValidate::Action FSMValidate::validate_action(Action action) {
 
+    printf("Action FSM: %d\n", action);
+    printf("Current state: %d\n", currentState);
+    for (Action a : expectedAction) {
+        printf("Expected action: %d\n", a);
+    }
 
+    // Returning action based on the expected action
     if (!expectedAction.empty() && expectedAction[0] != Action::ANY) {
-        if (!check_expected_action(action)) {
+        printf("Expected action not empty\n");
 
+        if (!check_expected_action(action)) {
+            printf("Action not expected\n");
             if (get_source(action) == Source::USER) {
                 expectedAction = {Action::ANY};
                 currentState = previousState;
@@ -47,12 +63,14 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             }
 
         } else {
+            printf("Action expected\n");
             expectedAction = {Action::ANY};
             return Action::ANY;
         }
     }
+    printf("Expected action empty\n");
 
-
+    // Switch statement for the current state
     switch (currentState) {
         case State::START:
             previousState = State::START;
@@ -184,3 +202,4 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             return Action::OVER;
     }
 }
+

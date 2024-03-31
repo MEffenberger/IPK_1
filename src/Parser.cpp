@@ -1,9 +1,17 @@
-//
-// Created by marek on 14.03.2024.
-//
+/**
+ * @file Parser.cpp
+ *
+ * Implementation of the Parser class. Printing the help message function.
+ *
+ * @Author Marek Effenberger
+ */
 
 #include "Parser.h"
 
+/**
+ * Print the help message
+ * @param argv
+ */
 void print_help(const std::string& argv) {
     std::cout << "Usage: " << argv << " [options]\n";
     std::cout << "Options:\n";
@@ -14,6 +22,7 @@ void print_help(const std::string& argv) {
     std::cout << "  -r <retransmissions>   Maximum UDP retransmissions      Default: 3\n";
     exit(EXIT_SUCCESS);
 }
+
 
 void Parser::parse(int argc, char *argv[], Config& config) {
     int c;

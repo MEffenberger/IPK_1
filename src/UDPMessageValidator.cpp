@@ -1,36 +1,40 @@
-//
-// Created by marek on 27.03.2024.
-//
+/**
+ * @file UDPMessageValidator.cpp
+ *
+ * Implementation of the UDPMessageValidator class
+ * Responsible for validating and forming messages in the udp protocol
+ *
+ * @Author Marek Effenberger
+ */
 
 #include "UDPMessageValidator.h"
 
+// Forming the bye message
 std::vector<uint8_t> UDPMessageValidator::form_bye_message(uint16_t messageID) {
     std::vector<uint8_t> response;
     response.push_back(0xFF);
-
-    // Add the messageID (2 bytes, big endian)
-    response.push_back(static_cast<uint8_t>((messageID >> 8) & 0xFF));
+    response.push_back(static_cast<uint8_t>((messageID >> 8)));
     response.push_back(static_cast<uint8_t>(messageID & 0xFF));
-
     return response;
 }
 
-std::vector<uint8_t > UDPMessageValidator::form_error_message(uint16_t messageID, const std::string& dname,
-                                                              const std::string& error){
+// Forming the error message
+std::vector<uint8_t > UDPMessageValidator::form_error_message(uint16_t messageID, const std::string& dname, const std::string& error){
+
     std::vector<uint8_t> response;
     response.push_back(0xFE);
-    response.push_back(static_cast<uint8_t>((messageID >> 8) & 0xFF));
+    response.push_back(static_cast<uint8_t>((messageID >> 8)));
     response.push_back(static_cast<uint8_t>(messageID & 0xFF));
-
+    // Display name and error message
     response.insert(response.end(), dname.begin(), dname.end());
     response.push_back('\0');
-
     response.insert(response.end(), error.begin(), error.end());
     response.push_back('\0');
 
     return response;
 }
 
+// Split the message by spaces
 std::vector<std::string> UDPMessageValidator::split_message(const std::string& message) {
 
     std::vector<std::string> result;
@@ -47,8 +51,9 @@ std::vector<std::string> UDPMessageValidator::split_message(const std::string& m
     return result;
 }
 
+// Validate the id
 bool UDPMessageValidator::validate_id(const std::string& id) {
-    // Validate the id
+
     // 1*20 (ALPHA / DIGIT / "-")
     if (id.size() < 1 || id.size() > 20) {
         return false;
@@ -61,8 +66,9 @@ bool UDPMessageValidator::validate_id(const std::string& id) {
     return true;
 }
 
+// Validate the secret
 bool UDPMessageValidator::validate_secret(const std::string& secret) {
-    // Validate the secret
+
     // 1*128 (ALPHA / DIGIT / "-")
     if (secret.size() < 1 || secret.size() > 128) {
         return false;
@@ -75,8 +81,9 @@ bool UDPMessageValidator::validate_secret(const std::string& secret) {
     return true;
 }
 
+// Validate the content
 bool UDPMessageValidator::validate_content(const std::string& content) {
-    // Validate the content
+
     // 1*1400 (VCHAR / SP)
     if (content.size() < 1 || content.size() > 1400) {
         return false;
@@ -89,8 +96,9 @@ bool UDPMessageValidator::validate_content(const std::string& content) {
     return true;
 }
 
+// Validate the display name
 bool UDPMessageValidator::validate_dname(const std::string& daname) {
-    // Validate the dname
+
     // 1*20 (VCHAR)
 
     if (daname.size() < 1 || daname.size() > 20) {
@@ -104,10 +112,12 @@ bool UDPMessageValidator::validate_dname(const std::string& daname) {
     return true;
 }
 
+// Get the display name
 std::string UDPMessageValidator::get_display_name() const {
     return displayName;
 }
 
+// Rename the display name
 bool UDPMessageValidator::rename(const std::string& name) {
     if (validate_dname(name)) {
         displayName = name;
@@ -116,6 +126,7 @@ bool UDPMessageValidator::rename(const std::string& name) {
     return false;
 }
 
+// Validate the authorize message, form the message
 std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::authorize_validate(int8_t code, uint16_t messageID,
                                                                               const std::string& username,
                                                                               const std::string& deename,
@@ -151,7 +162,7 @@ std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::authorize_validate(in
     return std::make_pair(response, true);
 }
 
-
+// Validate the join message, form the message
 std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::join_validate(int8_t code, uint16_t messageID,
                                                                          const std::string& channel) {
 
@@ -180,6 +191,7 @@ std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::join_validate(int8_t 
     return std::make_pair(response, true);
 }
 
+// Validate the message message, form the message
 std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::message_validate(int8_t code, uint16_t messageID,
                                                                             const std::string& content) {
 
@@ -208,11 +220,13 @@ std::pair<std::vector<uint8_t>, bool> UDPMessageValidator::message_validate(int8
     return std::make_pair(response, true);
 }
 
+// Validate some specific parts of individual types
 std::pair<std::vector<std::string>, bool> UDPMessageValidator::parse_and_validate(const std::vector<uint8_t>& message, std::string type) {
 
     std::vector<std::string> result;
     std::string word;
 
+    // Get the words from the message
     for (char c : message) {
         if (c == '\0') {
             result.push_back(word);
@@ -223,7 +237,7 @@ std::pair<std::vector<std::string>, bool> UDPMessageValidator::parse_and_validat
     }
 
     std::string invalid = "Invalid Arguments Provided";
-
+    // Content for reply
     if (type == "reply"){
         if (result.size() != 1){
             result.clear();
@@ -236,6 +250,7 @@ std::pair<std::vector<std::string>, bool> UDPMessageValidator::parse_and_validat
         } else {
             return std::make_pair(result, true);
         }
+    // Content and display name for msg and err
     } else if (type == "msg"){
         if (result.size() != 2){
             result.clear();

@@ -1,11 +1,18 @@
-//
-// Created by marek on 29.03.2024.
-//
+/**
+ * @file interruptSignal.cpp
+ * Implementation of interruptSignal.h
+ *
+ * Handles the signal interrupt
+ *
+ * @Author Marek Effenberger
+ */
 
 #include "interruptSignal.h"
 
-std::atomic<bool> interrupted(false);  // Definition goes here, without extern
+// Global variable to store the interrupt status
+std::atomic<bool> interrupted(false);
 
+// Signal handler
 void signal_handler(int signal) {
     if (signal == SIGINT) {
         interrupted = true;

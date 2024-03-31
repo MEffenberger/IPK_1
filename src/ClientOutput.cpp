@@ -1,6 +1,11 @@
-//
-// Created by marek on 21.03.2024.
-//
+/**
+ * @file ClientOutput.cpp
+ * Implementation of the ClientOutput class
+ * This class is responsible for printing messages to the console
+ * for the client.
+ *
+ * @Author Marek Effenberger
+ */
 
 #include "ClientOutput.h"
 
