@@ -1,1 +1,0 @@
-CMakeLists.txt not found in C:\Users\marek\CLionProjects\IPK_1 Select CMakeLists.txt
