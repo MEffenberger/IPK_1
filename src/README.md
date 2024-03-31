@@ -18,7 +18,7 @@
 4. [Testing](#testing)
 5. [Additional Features](#additional-features)
 6. [License](#license)
-
+7. [Bibliography](#bibliography)
 
 
 
@@ -26,6 +26,7 @@
 This project is a chat client developed by Marek Effenberger. It is written entirely in C++ (standard C++20), developed for the Linux operating system.
 The project is a part of the IPK24 course at the Brno University of Technology. The client is designed to communicate using one of two protocols: TCP or UDP. 
 The client can send messages to the server and receive messages from the server. It runs with compliance to the IPK24 protocol which shall be described further.
+Most of the approach is based on the Beej's Guide to Network Programming<sup>[1]</sup>.
 
 ### Installation and Setup
 The client is built using the Makefile. To build the client, run the following command in the root directory of the project:
@@ -58,7 +59,7 @@ Based on the protocol client can either continue communication or close the conn
 
 In this section I briefly describe the two protocols used in this 
 project: TCP and UDP, their differences, and their use cases within the project.
-More detailed information can be found in the [RFC 9293](https://tools.ietf.org/html/rfc9293) for TCP and [RFC 768](https://tools.ietf.org/html/rfc768) for UDP.
+More detailed information can be found in the RFC 9293<sup>[2]</sup> for TCP and RFC 768<sup>[3]</sup> for UDP.
 
 ### TCP
 
@@ -154,7 +155,7 @@ The Handler classes based on the reaction of the 'FSMValidate' class decide the 
 ## Testing
 
 As I have not managed to implement a full-fledged server during the client development, 
-the testing of the client was done using the [student distributed servers](https://git.fit.vutbr.cz/xhobza03/ipk-client-test-server), [PacketSender](https://packetsender.com/), [Ncat](https://nmap.org/ncat/), and [Wireshark](https://www.wireshark.org/).
+the testing of the client was done using the student distributed servers<sup>[4]</sup>, PacketSender<sup>[5]</sup>, Ncat<sup>[6]</sup>, and Wireshark<sup>[7]</sup>.
 
 The client was tested for various scenarios, which shall cover the basic communication between the client and server.
 
@@ -173,7 +174,7 @@ The communication could be observed straightforwardly using the Ncat server.
 The UDP part was harder to test due to the nature of the protocol. 
 Using the PacketSender and the student environment I was able to validate that the dynamic protocol assignment works correctly and that the client can handle the retransmissions of the messages.
 This was achieved by confirming the message and switching port on the testing server by simply observing that the address structure changed and the data are sent accordingly.
-This could also be observed using Wireshark, where the packets were observed and the retransmissions were confirmed.
+![Wireshark](wireshark_udp.png)
 
 The packet loss was observed using Wireshark on bigger testcases to ensure that the incrementation of the ID is done correctly.
 
@@ -182,11 +183,29 @@ The packet loss was observed using Wireshark on bigger testcases to ensure that 
 ## Additional Features
 
 The sole feature on top of the requirements is the addition of user-invoked command '/exit' which allows the user to close the connection to the server and exit the client.
-This feature was added for simplification of the Ctrl+C command which is not always user-friendly. The interruptSignal thanks to this commands only invokes its function when the user wants to close the connection.
+This feature was added for simplification of the Ctrl+C command which is not always user-friendly. The interruptSignal thanks to this commands only invokes the exit command and the client can close the connection gracefully.
 
 
 ## License
 
 This code is licensed under the GNU General Public License v3.0. For more information, see the LICENSE file in the root directory of the project.
-```
 
+
+## Bibliography
+
+1. Beej's Guide to Network Programming, Hall B. [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
+2. Request for Comments, RFC9293, Wesley E. [RFC 9293 - TCP](https://tools.ietf.org/html/rfc9293)
+3. Request for Comments, RFC768, Postel J. [RFC 768 - UDP](https://tools.ietf.org/html/rfc768)
+4. Test Server, Hobza Tomáš [Student Distributed Servers](https://git.fit.vutbr.cz/xhobza03/ipk-client-test-server)
+5. Packet Sender, Dan Nagle [PacketSender](https://packetsender.com/)
+6. Ncat, Lyon Gordon [Ncat](https://nmap.org/ncat/)
+7. Wireshark [Wireshark](https://www.wireshark.org/)
+
+
+[1]: https://beej.us/guide/bgnet/
+[2]: https://tools.ietf.org/html/rfc9293
+[3]: https://tools.ietf.org/html/rfc768
+[4]: https://git.fit.vutbr.cz/xhobza03/ipk-client-test-server
+[5]: https://packetsender.com/
+[6]: https://nmap.org/ncat/
+[7]: https://www.wireshark.org/
