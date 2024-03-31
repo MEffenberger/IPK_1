@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="VUT-IPK"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="test">
+				<Option output="/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/test" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/11"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/11"/>
+					<Add directory="/usr/include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 test"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="test/fast">
+				<Option output="/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/test" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/11"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/11"/>
+					<Add directory="/usr/include/c++/11/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/11/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 test/fast"/>
+					<CompileFile command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j12 -f &quot;/mnt/c/Users/marek/CLionProjects/IPK_1/src/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/ClientOutput.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/ClientOutput.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/Config.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/Config.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/FSMValidate.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/FSMValidate.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/Parser.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/Parser.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/ProtocolHandler.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/ProtocolHandler.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/StreamHandler.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/StreamHandler.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/TCPMessageValidator.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/TCPMessageValidator.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/TCPProtocolHandler.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/TCPProtocolHandler.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/UDPMessageValidator.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/UDPMessageValidator.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/UDPProtocolHandler.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/UDPProtocolHandler.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/connectToServer.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/connectToServer.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/interruptSignal.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/interruptSignal.h">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/main.cpp">
+			<Option target="test"/>
+		</Unit>
+		<Unit filename="/mnt/c/Users/marek/CLionProjects/IPK_1/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
