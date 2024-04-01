@@ -34,7 +34,7 @@ The client is built using the Makefile. To build the client, run the following c
 ```bash
 make
 ```
-This will create an executable file called `ipk24_chat_client`. To run the client, use the following command with the appropriate arguments described in the table below:
+This will create an executable file called `ipk24chat_client`. To run the client, use the following command with the appropriate arguments described in the table below:
 ```bash
 ./ipk24_chat_client -t <tcp|udp> -s <server> [-p <port>] [-d <timeout>] [-r <retransmissions>]
 ```
@@ -54,7 +54,7 @@ The arguments -t and -s are mandatory. The arguments -p, -d, and -r are optional
 After these initial steps, the client will connect to the server and start the chat.
 The client is expected to enter a message. The user can send the message by pressing the Enter key.
 The client will then wait for a response from the server. If the server sends a message, the client will display it.
-Based on the protocol client can either continue communication or close the connection using the `exit` command or by pressing `Ctrl+C`.
+Based on the protocol client can either continue communication or close the connection using the `/exit` command or by pressing `Ctrl+C`.
 
 ## Theoretical Background
 
@@ -67,16 +67,16 @@ More detailed information can be found in the RFC 9293<sup>[2]</sup> for TCP and
 
 The Transmission Control Protocol (TCP) ensures reliable packet delivery over IP through mechanisms to handle lost, out-of-order, duplicated, or corrupted packets.
 TCP/IP communication begins with a three-way handshake between two computers to establish a connection.
-Data is sent as byte streams, where the only certainties are the order of the bytes and the integrity of the data.
+Data is sent as byte streams, where the only certainty is the order of the bytes arrived.
 Thanks to the delimiters '\r\n' my client can distinguish between individual messages and process them accordingly.
 
 ### UDP
 
-The User Datagram Protocol (UDP) is a connectionless protocol that sends packets of data, called datagrams, over the network.
+The User Datagram Protocol (UDP) is a connectionless protocol that sends packets of data, datagrams, over the network.
 UDP is faster than TCP because it does not require a connection to be established before sending data and does not guarantee delivery of the data.
 The main problem with UDP is that it does not guarantee the order of the packets, nor does it guarantee that the packets will be delivered at all.
 To ensure that the packets are delivered, the client sends a confirmation message to the server and vice versa.
-Handling of possible duplicates is managed through the use of sequence numbers 'MessageID' which ensures that if the message has been received, it will not be processed again.
+Handling of possible duplicates is managed through the use of sequence numbers 'MessageID' which ensures that if the message has been received, it will not be processed again, only confirmed.
 
 ### Poll
 
@@ -86,7 +86,7 @@ The function takes an array of pollfd structures, each representing a file descr
 
 ## System Architecture
 
-The system is divided into several parts, each of which is responsible for a different aspect of the communication process.
+The system is divided into several parts, each responsible for a different aspect of the communication process.
 It relies on communication between classes of which the most important one is the 'StreamHandler' class. This class, based on the
 protocol used, decides on instantiating a Handler for TCP or UDP.
 The Handler class is responsible for the protocol-specific communication with the server. The Handler class works closely with the 'MessageValidator' class,
@@ -101,7 +101,7 @@ The general overview of the system architecture is shown in the following simpli
 I have deliberately chosen a simple approach which combines procedural and object-oriented programming using only single instances of classes.
 Although the system is not overly complex, the classes are mainly used to encapsulate the basic logic of the system and to separate the concerns of the system.
 
-Through the utilization of smart pointers, the system is designed to be memory-efficient and to avoid memory leaks and segmentation faults.
+Through the utilization of smart pointers, the system is designed to be memory-efficient and to avoid memory leaks and other potential hazards.
 
 ### Configuration
 
@@ -109,13 +109,11 @@ After the successful parsing of the command-line arguments, this class validates
 
 ### Connection
 
-Connection of the client to the server is set in a function 'connectToServer', based on the protocol used, the 'getaddrinfo' function is used to get the server address and port.
+Connection of the client to the server is set in a function 'connectToServer'. Based on the protocol used, the 'getaddrinfo' function is used to get the server address and port.
 If the protocol is UDP the function simply returns the socket, if the protocol is TCP the function establishes a connection using the 'connect' function by iteratively trying the connection
 with the structures in the linked-list.
 
-If the protocol is UDP the 'sockaddr_in' structure is used to set the server address and port,
-if the protocol is TCP the 'sockaddr_in' structure is used to set the server address and port and the 'sockaddr_in'
-structure is created and passed for further use.
+If the protocol is UDP the 'sockaddr_in' structure is stored and passed to the 'UDPHandler' class for further processing.
 
 ### Stream Processing
 
