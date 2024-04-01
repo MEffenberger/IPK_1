@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 /**
  * Class responsible for the validation of the messages in the tcp protocol

@@ -17,6 +17,7 @@
 #include <vector>
 #include <cstring>
 #include "UDPMessageValidator.h"
+#include <algorithm>
 
 /**
  * UDP Protocol Handler
