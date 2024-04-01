@@ -11,4 +11,7 @@ The implementation of the UDP protocol is now supported. The queue has been remo
 As of now the only downside might be wrong time handling in the re-sends.
 
 Main Downgrade as of the version 1.0.0 is personal dissatisfaction with the code quality.
-On the other hand the tested scenarios have shown that the implementation is working as expected.
+On the other hand the tested scenarios have shown that the implementation is working, 
+except of a correct timeout handling. If message is received, not being a confirmation, the client waits
+for the original timeout, not the original timeout minus the time for the non-confirmation message to arrive.
+This could be fixed by proper use of 'chrono' library.

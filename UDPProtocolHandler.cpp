@@ -534,6 +534,11 @@ ProtocolHandler::ClientState UDPProtocolHandler::process_user_input(const std::s
     }
     // MESSAGE
     else{
+        // if first byte / - error
+        if (message[0] == '/'){
+            clientOutput.internal_error_message("Invalid command");
+            return ProtocolHandler::ClientState::READY_FOR_INPUT;
+        }
         action = FSMValidate::Action::MESSAGE_USER;
         reaction = fsm.validate_action(action);
         printf("Action MESSAGE\n");
