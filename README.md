@@ -3,18 +3,19 @@
 
 ## Table of Contents
 1. [General Introduction](#general-introduction)
-    1. [Installation and Setup](#installation-and-setup)
-    2. [Usage](#usage)
+   1. [Installation and Setup](#installation-and-setup)
+   2. [Usage](#usage)
 2. [Theoretical Background](#theoretical-background)
-    1. [TCP](#tcp)
-    2. [UDP](#udp)
+   1. [TCP](#tcp)
+   2. [UDP](#udp)
+   3. [Poll](#poll)
 3. [System Architecture](#system-architecture)
-    1. [Configuration](#configuration)
-    2. [Connection](#connection)
-    3. [Stream Processing](#stream-processing)
-    4. [Protocol Handling](#protocol-handling)
-    5. [Message Handling](#error-handling)
-    6. [State Machine](#state-machine)
+   1. [Configuration](#configuration)
+   2. [Connection](#connection)
+   3. [Stream Processing](#stream-processing)
+   4. [Protocol Handling](#protocol-handling)
+   5. [Message Handling](#error-handling)
+   6. [State Machine](#state-machine)
 4. [Testing](#testing)
 5. [Additional Features](#additional-features)
 6. [License](#license)
@@ -24,7 +25,7 @@
 
 ## General Introduction
 This project is a chat client developed by Marek Effenberger. It is written entirely in C++ (standard C++20), developed for the Linux operating system.
-The project is a part of the IPK24 course at the Brno University of Technology. The client is designed to communicate using one of two protocols: TCP or UDP. 
+The project is a part of the IPK24 course at the Brno University of Technology. The client is designed to communicate using one of two protocols: TCP or UDP.
 The client can send messages to the server and receive messages from the server. It runs with compliance to the IPK24 protocol which shall be described further.
 Most of the approach is based on the Beej's Guide to Network Programming<sup>[1]</sup>.
 
@@ -50,22 +51,22 @@ This will create an executable file called `ipk24_chat_client`. To run the clien
 The arguments -t and -s are mandatory. The arguments -p, -d, and -r are optional. If the user does not provide these arguments, the client will use the default values.
 
 ### Usage
-After these initial steps, the client will connect to the server and start the chat. 
-The client is expected to enter a message. The user can send the message by pressing the Enter key. 
-The client will then wait for a response from the server. If the server sends a message, the client will display it. 
+After these initial steps, the client will connect to the server and start the chat.
+The client is expected to enter a message. The user can send the message by pressing the Enter key.
+The client will then wait for a response from the server. If the server sends a message, the client will display it.
 Based on the protocol client can either continue communication or close the connection using the `exit` command or by pressing `Ctrl+C`.
 
 ## Theoretical Background
 
-In this section I briefly describe the two protocols used in this 
+In this section I briefly describe the two protocols used in this
 project: TCP and UDP, their differences, and their use cases within the project.
 More detailed information can be found in the RFC 9293<sup>[2]</sup> for TCP and RFC 768<sup>[3]</sup> for UDP.
 
+
 ### TCP
 
-
-The Transmission Control Protocol (TCP) ensures reliable packet delivery over IP through mechanisms to handle lost, out-of-order, duplicated, or corrupted packets. 
-TCP/IP communication begins with a three-way handshake between two computers to establish a connection. 
+The Transmission Control Protocol (TCP) ensures reliable packet delivery over IP through mechanisms to handle lost, out-of-order, duplicated, or corrupted packets.
+TCP/IP communication begins with a three-way handshake between two computers to establish a connection.
 Data is sent as byte streams, where the only certainties are the order of the bytes and the integrity of the data.
 Thanks to the delimiters '\r\n' my client can distinguish between individual messages and process them accordingly.
 
@@ -77,25 +78,27 @@ The main problem with UDP is that it does not guarantee the order of the packets
 To ensure that the packets are delivered, the client sends a confirmation message to the server and vice versa.
 Handling of possible duplicates is managed through the use of sequence numbers 'MessageID' which ensures that if the message has been received, it will not be processed again.
 
+### Poll
 
-
+The poll function is a system call in Unix-like operating systems that allows a program to monitor multiple file descriptors to see if they are ready for I/O operations.
+The function takes an array of pollfd structures, each representing a file descriptor, and waits for one of them to become ready for the specified operation.
 
 
 ## System Architecture
 
 The system is divided into several parts, each of which is responsible for a different aspect of the communication process.
 It relies on communication between classes of which the most important one is the 'StreamHandler' class. This class, based on the
-protocol used, decides on instantiating a Handler for TCP or UDP. 
+protocol used, decides on instantiating a Handler for TCP or UDP.
 The Handler class is responsible for the protocol-specific communication with the server. The Handler class works closely with the 'MessageValidator' class,
-which is responsible for validating the messages sent or received. Both TCP and UDP Handler classes communicate with the 'ClientOutput' class, which 
+which is responsible for validating the messages sent or received. Both TCP and UDP Handler classes communicate with the 'ClientOutput' class, which
 according to the specification prints the messages to the console. Another shared communication is with the 'FSMValidate' class, which is responsible for
 validating the state of the client and server. The 'FSMValidate' class is used to ensure that the client and server are in the correct state to send or receive communication-specific messages.
 
-The general overview of the system architecture is shown in the following diagram:
+The general overview of the system architecture is shown in the following simplified diagram:
 
 ![System Architecture](images/diagram.png)
 
-I have deliberately chosen a simple approach which combines procedural and object-oriented programming using only single instances of classes. 
+I have deliberately chosen a simple approach which combines procedural and object-oriented programming using only single instances of classes.
 Although the system is not overly complex, the classes are mainly used to encapsulate the basic logic of the system and to separate the concerns of the system.
 
 Through the utilization of smart pointers, the system is designed to be memory-efficient and to avoid memory leaks and segmentation faults.
@@ -110,8 +113,8 @@ Connection of the client to the server is set in a function 'connectToServer', b
 If the protocol is UDP the function simply returns the socket, if the protocol is TCP the function establishes a connection using the 'connect' function by iteratively trying the connection
 with the structures in the linked-list.
 
-If the protocol is UDP the 'sockaddr_in' structure is used to set the server address and port, 
-if the protocol is TCP the 'sockaddr_in' structure is used to set the server address and port and the 'sockaddr_in' 
+If the protocol is UDP the 'sockaddr_in' structure is used to set the server address and port,
+if the protocol is TCP the 'sockaddr_in' structure is used to set the server address and port and the 'sockaddr_in'
 structure is created and passed for further use.
 
 ### Stream Processing
@@ -144,7 +147,7 @@ The data are passed back to the specific Handler class which decides the further
 
 ### State Machine
 
-The 'FSMValidate' class is responsible for validating the state of the client and server. 
+The 'FSMValidate' class is responsible for validating the state of the client and server.
 It ensures that the client and server are in the correct state to send or receive communication-specific messages.
 It works with a set of enums representing the Actions and States of the client and server.
 The Handler classes based on the reaction of the 'FSMValidate' class decide the further proceedings of the communication.
@@ -154,7 +157,7 @@ The Handler classes based on the reaction of the 'FSMValidate' class decide the 
 
 ## Testing
 
-As I have not managed to implement a full-fledged server during the client development, 
+As I have not managed to implement a full-fledged server during the client development,
 the testing of the client was done using the student distributed servers<sup>[4]</sup>, PacketSender<sup>[5]</sup>, Ncat<sup>[6]</sup>, and Wireshark<sup>[7]</sup>.
 
 The client was tested for various scenarios, which shall cover the basic communication between the client and server.
@@ -162,23 +165,42 @@ The client was tested for various scenarios, which shall cover the basic communi
 Firstly the arguments were tested for the correct parsing and validation using simple test cases.
 
 The TCP part of the program was tested for the basic communication, with a special focus on the bytestream-specific communication.
-The testcases were mainly focused on the overflow of the one 'recv' call of the function. 
+The testcases were mainly focused on the overflow of the one 'recv' call of the function.
 This was simply tested by sending a large amount of data
-and checking multiple flags and print statements to ensure that the data is processed correctly. 
+and checking multiple flags and print statements to ensure that the data is processed correctly.
 The data received were observed using inbuilt debugger in the CLion IDE.
 The inputs were mostly large ascii art files, sent among students through simple server.
 
 The basic tests were done using Ncat, where the client connected to the local server and sent messages to the server.
-The communication could be observed straightforwardly using the Ncat server.
+The communication could be observed straightforwardly using the Ncat server as seen below.
+```bash
+terminal 1: nc -4 -C -l -v 127.0.0.1 4567
+terminal 2: ./ipk24_chat_client -t tcp -s 127.0.0.1
+terminal 2: /auth a b c
+terminal 1: AUTH a AS c USING b
+.
+. (multiple messages)
+.
+terminal 2: /exit (or Ctrl+C/ EOF)
+terminal 1: BYE
+```
 
-The UDP part was harder to test due to the nature of the protocol. 
+The UDP part was harder to test due to the nature of the protocol.
 Using the PacketSender and the student environment I was able to validate that the dynamic protocol assignment works correctly and that the client can handle the retransmissions of the messages.
 This was achieved by confirming the message and switching port on the testing server by simply observing that the address structure changed and the data are sent accordingly.
 ![Wireshark](images/wireshark_udp.png)
 
 The packet loss was observed using Wireshark on bigger testcases to ensure that the incrementation of the ID is done correctly.
 
-
+The signal interrupt was tested using the 'Ctrl+C' command and the '/exit' command as well.
+```bash
+Client: Awaiting event
+Client: ^C
+Client: Sending /exit command to the handler
+Client: Sending message to server: BYE
+Server: Received message: BYE
+Client: Gracefully exiting
+```
 
 ## Additional Features
 
