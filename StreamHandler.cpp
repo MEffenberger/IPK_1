@@ -10,7 +10,6 @@
 
 #include "StreamHandler.h"
 #include <poll.h>
-#define printf(...) ((void)0)
 
 
 void StreamHandler::run_event_loop() {
@@ -38,11 +37,9 @@ void StreamHandler::run_event_loop() {
     // Run the event loop
     while (true) {
 
-        printf("\n\n\nState: %d\n\n\n", state);
 
         // Ending the connection
         if (state == ProtocolHandler::ClientState::OVER) {
-            printf("Connection closed\n");
             close(sockfd);
             return;
         }
@@ -61,7 +58,6 @@ void StreamHandler::run_event_loop() {
         // Check if the signal was interrupted, if so, send bye
         if (interrupted && first_time_interrupted) {
             state = protocolHandler->process_user_input("/exit");
-            printf("Connection closed, ctrlC\n");
             first_time_interrupted = false;
             continue;
         }
@@ -76,7 +72,6 @@ void StreamHandler::run_event_loop() {
             // Timeout occurred
             if (retry_count > 0) {
                 // Retry sending the message
-                printf("Timeout occurred, retrying\n");
                 protocolHandler->resend_last_message();
                 retry_count--;
                 state = ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION;
@@ -84,7 +79,6 @@ void StreamHandler::run_event_loop() {
 
             } else {
                 // Max retries reached
-                printf("Max retries reached, exit\n");
                 state = ProtocolHandler::ClientState::OVER;
                 continue;
             }
@@ -95,7 +89,6 @@ void StreamHandler::run_event_loop() {
 
             // Check if the socket is ready to read
             if (fds[0].revents & POLLIN) {
-                printf("SERVER MESSAGE\n");
                 state = protocolHandler->process_server_message();
                 if (state != ProtocolHandler::ClientState::WAITING_FOR_CONFIRMATION){
                     retry_count = retrans;
@@ -117,11 +110,9 @@ void StreamHandler::run_event_loop() {
                     if (input.empty()) {
                         continue;
                     }
-                    printf("USER INPUT\n");
                     state = protocolHandler->process_user_input(input);
                 } else {
                     // EOF or other read error
-                    printf("Connection closed, exit\n");
                     state = protocolHandler->process_user_input("/exit");
                 }
             }

@@ -8,7 +8,6 @@
  */
 
 #include "FSMValidate.h"
-#define printf(...) ((void)0)
 
 
 bool FSMValidate::check_expected_action(Action action) {
@@ -39,18 +38,11 @@ FSMValidate::Source FSMValidate::get_source(Action action) {
 
 FSMValidate::Action FSMValidate::validate_action(Action action) {
 
-    printf("Action FSM: %d\n", action);
-    printf("Current state: %d\n", currentState);
-    for (Action a : expectedAction) {
-        printf("Expected action: %d\n", a);
-    }
 
     // Returning action based on the expected action
     if (!expectedAction.empty() && expectedAction[0] != Action::ANY) {
-        printf("Expected action not empty\n");
 
         if (!check_expected_action(action)) {
-            printf("Action not expected\n");
             if (get_source(action) == Source::USER) {
                 expectedAction = {Action::ANY};
                 currentState = previousState;
@@ -63,12 +55,10 @@ FSMValidate::Action FSMValidate::validate_action(Action action) {
             }
 
         } else {
-            printf("Action expected\n");
             expectedAction = {Action::ANY};
             return Action::ANY;
         }
     }
-    printf("Expected action empty\n");
 
     // Switch statement for the current state
     switch (currentState) {

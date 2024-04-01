@@ -327,8 +327,6 @@ ProtocolHandler::ClientState TCPProtocolHandler::process_received(const std::str
         action = FSMValidate::Action::BYE_SERVER;
         reaction = fsm.validate_action(action);
         if (reaction == FSMValidate::Action::ANY){
-            printf("Server closed the connection, reaction : %d\n", reaction);
-            printf("over %d\n", ProtocolHandler::ClientState::OVER);
             return ProtocolHandler::ClientState::OVER;
         }
         else if (reaction == FSMValidate::Action::ERROR_USER){
